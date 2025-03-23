@@ -25,3 +25,8 @@ flex的格子
 - 增加2个参数defaultValue和onChange
 - 提供ref来暴露calendar的api
 - 添加两种模式的支持，使用ahook
+
+## 08实现calendar组件（上）
+- 用dayjs
+- 布局部分，切换日期的header和每个月的日期的MonthCalendar
+- sass管理样式
