@@ -19,6 +19,7 @@
     "@types/react": "18.2.45",
     "@types/react-dom": "18.2.18",
     "@vitejs/plugin-react-swc": "^3.8.0",
+    "classnames": "^2.5.1",
     "dayjs": "^1.11.13",
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",

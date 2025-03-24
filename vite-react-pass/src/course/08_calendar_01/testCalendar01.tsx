@@ -1,18 +1,44 @@
 import dayjs, { Dayjs } from "dayjs";
 import "./index.scss";
+import { CSSProperties, ReactNode, useState } from "react";
+import cs from "classnames";
+import { useControllableValue } from "ahooks";
 export interface CalendarProps {
+  className?: string;
+  style?: CSSProperties;
+  dateRender?: (date: Dayjs) => ReactNode;
+  dateInnerRender?: (date: Dayjs) => ReactNode;
   value: Dayjs;
+  onChange?: (date: Dayjs) => void;
 }
-interface MonthCalendarProps extends CalendarProps {}
-function Header() {
+interface HeaderProps {
+  curMonth: Dayjs;
+  prevClick: () => void;
+  nextClick: () => void;
+  toDayClick: () => void;
+}
+interface MonthCalendarProps extends CalendarProps {
+  selectHandler:(date:Dayjs)=>void;
+  curMonth:Dayjs;
+}
+function Header(props: HeaderProps) {
+  const { prevClick, nextClick, toDayClick, curMonth } = props;
   return (
     <>
       <div className="calendar-header">
         <div className="calendar-header-left">
-          <div className="calendar-header-icon">&lt;</div>
-          <div className="calendar-header-value">2023-07-01</div>
-          <div className="calendar-header-icon">&gt;</div>
-          <button className="calendar-header-btn">今天</button>
+          <div className="calendar-header-icon" onClick={prevClick}>
+            &lt;
+          </div>
+          <div className="calendar-header-value">
+            {curMonth.format("YYYY/MM")}
+          </div>
+          <div className="calendar-header-icon" onClick={nextClick}>
+            &gt;
+          </div>
+          <button className="calendar-header-btn" onClick={toDayClick}>
+            今天
+          </button>
         </div>
       </div>
     </>
@@ -21,10 +47,11 @@ function Header() {
 
 function MonthCalendar(props: MonthCalendarProps) {
   const weekList = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-  const { value } = props;
+  const { value, dateRender, dateInnerRender, selectHandler,curMonth} =
+    props;
+    console.log('MonthCalendar');
   function getMonthAllDay(date: Dayjs) {
-    let dayInMonth = value.daysInMonth(); //总天数拿来渲染
-    let startDate = value.startOf("month"); //
+    let startDate = date.startOf("month"); //
     let week = startDate.day(); // 星期几 之前的渲染为空
     const daysInfo = new Array(6 * 7);
     for (let i = 0; i < week; i++) {
@@ -42,22 +69,49 @@ function MonthCalendar(props: MonthCalendarProps) {
     }
     return daysInfo;
   }
- const allDays =  getMonthAllDay(value);
-  const rednerFn = (date:{date:Dayjs,currentMonth:boolean}[]) => {
+  const allDays = getMonthAllDay(curMonth);
+  const renderDays = (date: { date: Dayjs; currentMonth: boolean }[],value:Dayjs,dateRender?:MonthCalendarProps['dateRender'],dateInnerRender?:MonthCalendarProps['dateInnerRender'],selectHandler?:(date:Dayjs)=>void) => {
     // 月份的总天数
     // 开始的时间
-
+    console.log('renderDays')
     const rows = [];
     for (let i = 0; i < 6; i++) {
       let row = [];
       for (let j = 0; j < 7; j++) {
         const item = date[i * 7 + j];
-        row[j]=(<div className={ "calendar-month-body-cell " + (item.currentMonth ? 'calendar-month-body-cell-current' : '')} key={item.date.date()} >{item.date.date()}</div>);
+        row[j] = (
+          <div
+            className={
+              "calendar-month-body-cell " +
+              ( item.currentMonth ? "calendar-month-body-cell-current" : "")
+              
+            }
+            onClick={(e)=>(selectHandler?.(item.date))}
+            key={item.date.date()}
+          >
+            {dateRender ? (
+              dateRender(item.date)
+            ) : (
+              <div className="calendar-month-body-cell-date">
+                <div className={cs("calendar-month-body-cell-date-value",
+                                    value.format('YYYY-MM-DD') === item.date.format('YYYY-MM-DD')
+                                        ? "calendar-month-body-cell-date-selected"
+                                        : ""
+                                )}>
+                  {item.date.date()}
+                </div>
+                <div className="calendar-month-body-cell-date-content">
+                  {dateInnerRender?.(item.date)}
+                </div>
+              </div>
+            )}
+          </div>
+        );
       }
       rows.push(row);
     }
-    return rows.map(v=>{
-        return <div className="calendar-month-body-row">{v}</div>
+    return rows.map((v,i) => {
+      return <div className="calendar-month-body-row" key={i}>{v}</div>;
     });
   };
   return (
@@ -69,18 +123,51 @@ function MonthCalendar(props: MonthCalendarProps) {
           </div>
         ))}
       </div>
-      <div className="calendar-month-body">
-        {rednerFn(allDays)}
-      </div>
+      <div className="calendar-month-body">{renderDays(allDays,value,dateRender,dateInnerRender,selectHandler)}</div>
     </div>
   );
 }
 
 export function Calendar(props: CalendarProps) {
+  const { className, style, dateRender, dateInnerRender, onChange } =
+    props;
+  const classNameProp = cs("calendar", className);
+  const [curValue,setCurValue] = useControllableValue(props, {
+    defaultValue: dayjs(),
+  }); // 会回调onChange
+  const [curMonth, setCurMonth] = useState<Dayjs>(curValue);
+  const prevClick = () => {
+    setCurMonth(curMonth.subtract(1, "month"));
+  };
+  const nextClick = () => {
+    setCurMonth(curMonth.add(1, "month"));
+  };
+  const toDayClick = () => {
+    const date = dayjs(Date.now());
+    setCurValue(date);
+    setCurMonth(date);
+    //onChange?.(date);
+  };
+  const selectHandler = (date: Dayjs) => {
+    // console.log('selectHandler'+date.date())
+    setCurValue(date);
+    setCurMonth(date);
+    // onChange?.(date);
+  };
   return (
-    <div className="calendar">
-      <Header />
-      <MonthCalendar {...props} />
+    <div className={classNameProp} style={style}>
+      <Header
+        prevClick={prevClick}
+        nextClick={nextClick}
+        toDayClick={toDayClick}
+        curMonth={curMonth}
+      />
+      <MonthCalendar
+        {...props}
+        value={curValue}
+        selectHandler={selectHandler}
+        curMonth={curMonth}
+      />
     </div>
   );
 }

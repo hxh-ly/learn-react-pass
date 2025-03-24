@@ -30,3 +30,9 @@ flex的格子
 - 用dayjs
 - 布局部分，切换日期的header和每个月的日期的MonthCalendar
 - sass管理样式
+
+## 09实现calendar组件 （下）
+- className + style
+- dateRender + dateInnerContent
+- locale
+- value + onChange 【hook会回调onChange】
