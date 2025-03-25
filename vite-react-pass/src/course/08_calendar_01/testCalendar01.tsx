@@ -1,8 +1,11 @@
 import dayjs, { Dayjs } from "dayjs";
 import "./index.scss";
-import { CSSProperties, ReactNode, useState } from "react";
+import { CSSProperties, ReactNode, useContext, useState } from "react";
 import cs from "classnames";
 import { useControllableValue } from "ahooks";
+import LocaleContext from "../08_calendar_01/LocaleContext";
+import allLocales from "./locale";
+import {CalendarType} from './locale/type';
 export interface CalendarProps {
   className?: string;
   style?: CSSProperties;
@@ -22,6 +25,7 @@ interface MonthCalendarProps extends CalendarProps {
   curMonth:Dayjs;
 }
 function Header(props: HeaderProps) {
+  const localeCtxType = useContext(LocaleContext);
   const { prevClick, nextClick, toDayClick, curMonth } = props;
   return (
     <>
@@ -31,13 +35,13 @@ function Header(props: HeaderProps) {
             &lt;
           </div>
           <div className="calendar-header-value">
-            {curMonth.format("YYYY/MM")}
+            {curMonth.format(allLocales[localeCtxType.locale]['formatMonth'])}
           </div>
           <div className="calendar-header-icon" onClick={nextClick}>
             &gt;
           </div>
           <button className="calendar-header-btn" onClick={toDayClick}>
-            今天
+            {allLocales[localeCtxType.locale]['today']}
           </button>
         </div>
       </div>
@@ -46,7 +50,8 @@ function Header(props: HeaderProps) {
 }
 
 function MonthCalendar(props: MonthCalendarProps) {
-  const weekList = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+  const localeCtxType = useContext(LocaleContext);
+  const weekList = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const { value, dateRender, dateInnerRender, selectHandler,curMonth} =
     props;
     console.log('MonthCalendar');
@@ -119,7 +124,7 @@ function MonthCalendar(props: MonthCalendarProps) {
       <div className="calendar-month-week-list">
         {weekList.map((v) => (
           <div className="calendar-month-week-list-item" key={v}>
-            {v}
+            {allLocales[localeCtxType.locale]['week'][v]}
           </div>
         ))}
       </div>
