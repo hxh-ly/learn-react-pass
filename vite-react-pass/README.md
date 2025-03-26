@@ -38,6 +38,13 @@ flex的格子
 - value + onChange 【ahooks会调用onChange】
 
 ## 13实现Icon组件（上）
-- style className size spin
+- style className size spin  Icon封装
 - createIcon
 - createIconFromIconFont 
+
+## 14实现Space组件
+- direction、style、align、size、wrap、split、
+- ConfigProvider提供统一的size
+```tsx
+interface SpaceProps extends React.HtmlAttributes<HtmlDivElement> {}
+```
