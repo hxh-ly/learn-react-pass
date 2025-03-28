@@ -48,3 +48,11 @@ flex的格子
 ```tsx
 interface SpaceProps extends React.HtmlAttributes<HtmlDivElement> {}
 ```
+
+## 18实现WaterMark组件
+- 【style、className、width、height、zIndex、rotate、gap、offset】【getContainer】【fontStyle、image、content】
+- WaterMark: getContainer   useEffect->generateWark
+- useWaterMark
+- createWaterMark
+- createCanvasData
+- MutationObserver在UseWaterMark中，容器存在的时候，先清，在创建开始监听元素以及属性，在监听。创建的callback的onChange时删除水印重绘
