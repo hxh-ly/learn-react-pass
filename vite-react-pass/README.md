@@ -56,3 +56,7 @@ interface SpaceProps extends React.HtmlAttributes<HtmlDivElement> {}
 - createWaterMark
 - createCanvasData
 - MutationObserver在UseWaterMark中，容器存在的时候，先清，在创建开始监听元素以及属性，在监听。创建的callback的onChange时删除水印重绘
+
+## 19手写react-lazy组件
+- 【style，height，width，offset，onVisible，playload】
+- IntersectionObserver
