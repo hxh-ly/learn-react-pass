@@ -158,3 +158,38 @@ useChain([gridRef,boxApi],[0,1],1500)
     }
 </svg>
 ```
+
+## 24 动画结合手势
+```jsx
+npm i @react-spring/web @use-gesture/react -D
+
+const pages = [
+  'https://images.pexels.com/photos/62689/pexels-photo-62689.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+  'https://images.pexels.com/photos/733853/pexels-photo-733853.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+  'https://images.pexels.com/photos/4016596/pexels-photo-4016596.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+  'https://images.pexels.com/photos/351265/pexels-photo-351265.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+  'https://images.pexels.com/photos/924675/pexels-photo-924675.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+]
+
+function Viewpager(){
+  const width = window.innerWidth;
+  const [props,api] = useSprings(pages.length,(v,i)=>{
+    return {
+      x:i*width,
+      scale:1
+    }
+  })
+
+  return <>
+  {props.map(({x,scale},i)=>{
+    return <div className='wrapper'>
+      <animated.div key={i} style={{x}} className='page'>
+        <animated.div  style={{scale, backgroundImage:`url(${pages[i]})` }} />
+      </animated.div>
+    </div>
+  })}
+  </>
+}
+
+export default Viewpager
+```
