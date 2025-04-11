@@ -193,3 +193,29 @@ function Viewpager(){
 
 export default Viewpager
 ```
+
+## 26 tailwindcss 原子化的css框架
+安装
+
+```
+npm install tailwindcss @tailwindcss/vite -D
+
+App.css
+@import "tailwindcss";
+```
+### 介绍
+tailwindcsss是一个流行的原子化css框架。传统的css写法是定义class，然后在class内部写样式。而原子化css是通过预定义一些class样式，通过组合class完成样式的编写。
+预设的的class可以通过配置文件修改值，
+使用
+- text-[14px]
+- @layer aaa
+- @apply
+
+module.css使用
+- className会➕hash，可以通过vite.config.js generateScopedName 配置
+- :global(.class) 是全局；使用直接用类名
+- :local(.class) 是局部；与全局相反
+- globalModulePaths 匹配全局的module.css
+- localsConvention 导出的对象的key就会变成驼峰的
+- scopeBehaviour:'global' 
+总结: module.css用来防止样式冲突，bem是从规范上限制不可靠。module.css是从编译上避免命名冲突。组件开发都有模块化的需求

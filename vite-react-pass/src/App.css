@@ -1,3 +1,13 @@
+@import "tailwindcss";
+@layer utilities {
+  /* 定义 aaa- 前缀关联到 font-size */
+  .aaa-\[14px\] {
+    font-size: 14px;
+  }
+}
+.hxh-primary {
+  @apply p-12 text-blue-950
+}
 #root {
   max-width: 1280px;
   margin: 0 auto;
