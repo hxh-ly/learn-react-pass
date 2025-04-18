@@ -219,3 +219,17 @@ module.css使用
 - localsConvention 导出的对象的key就会变成驼峰的
 - scopeBehaviour:'global' 
 总结: module.css用来防止样式冲突，bem是从规范上限制不可靠。module.css是从编译上避免命名冲突。组件开发都有模块化的需求
+
+## 30 Message组件的开发
+- useStore msgList add remove clear update
+- useTimer
+- MessageProvider
+- MessageItem
+- 添加动画 react-transition-group   csstransitiongroup包裹 + csstransition包裹子项 class实现enter+exit
+- message.info
+- MessageProvider + forWardRef + useImperative
+- ContextProvder.tsx 里创建context暴露，返回Context.Provider
+- useMessage使用context中的ref元素
+- ConfigContext.Provider (MessageProvider放出去，接在context里)
+- 在Aaa组件里使用useMessage
+- useImperative的是某个时机，才修改的。 我们是先执行了useMessage ，在设置的MessageRef.current
