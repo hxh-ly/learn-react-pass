@@ -233,3 +233,11 @@ module.css使用
 - ConfigContext.Provider (MessageProvider放出去，接在context里)
 - 在Aaa组件里使用useMessage
 - useImperative的是某个时机，才修改的。 我们是先执行了useMessage ，在设置的MessageRef.current
+
+## 31popover气泡卡片的开发
+- 计算浮动位置float-ui npm install @floating-ui/react -D
+- 了解hooks useFloating useHover useInteractions
+- + useDiss useFloating配置offset、placement、 <FloatArrow></FloatArrow>
+- 边界处理，如果出现在上方，滚动到不可视，应该变到下方 flip中间件
+- 封装 props {content,open,openChange,placement,trigger,className,style }
+- createPortal挂在body下
