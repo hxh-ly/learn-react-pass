@@ -241,3 +241,8 @@ module.css使用
 - 边界处理，如果出现在上方，滚动到不可视，应该变到下方 flip中间件
 - 封装 props {content,open,openChange,placement,trigger,className,style }
 - createPortal挂在body下
+## 32项目里如何快速定位组件源码
+- npm i click-to-react-component
+- 原理，_reactFiber -> debugFiber(可以层层找到父filber) ，_debuggerSource(定位源码行列号位置)
+- ui实现，定义框选样式，target是个state，设置dataset属性，mousemove改变target，从而获取 [data-xx]的样式。
+- ui实现，popover是通过 @floating-ui实现的
