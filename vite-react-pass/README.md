@@ -246,3 +246,15 @@ module.css使用
 - 原理，_reactFiber -> debugFiber(可以层层找到父filber) ，_debuggerSource(定位源码行列号位置)
 - ui实现，定义框选样式，target是个state，设置dataset属性，mousemove改变target，从而获取 [data-xx]的样式。
 - ui实现，popover是通过 @floating-ui实现的
+## 35colorPicker颜色选择器组件
+- 布局 colorPickerPanel + colorInput ✅
+- colorPickerPanel = Palette ✅ + Slider
+- type color ✅
+- Palette组件的实现 ✅
+- Handler组件的实现 ✅
+- Transform组件的实现 ✅
+- 实现拖拽的useColorDrag.ts  ✅
+- 根据x,y去算颜色 utils.ts ✅
+- 初始化颜色不对，最开始也要计算一次滑块位置 ✅
+- 支持受控和非受控组件 ✅
+- 色展示input （h l） ✅
