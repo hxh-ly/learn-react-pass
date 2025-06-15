@@ -14,6 +14,12 @@ import { Home26 } from './home/home26'
 import { Home30 } from './home/home30'
 import { Home31 } from './home/home31'
 import { Home35 } from './home/home35'
+import { Home36 } from './home/home36'
+import { Mask } from './course/36_onBoarding/Mask'
+import { Button, Flex } from 'antd'
+import { OnBoarding } from './course/36_onBoarding/OnBoarding'
+import { Home41 } from './home/home43'
+import { Home52 } from './home/home52'
 function App() {
   const [count, setCount] = useState(0)
 
@@ -30,9 +36,12 @@ function App() {
     <Home26/> */}
    {/*  <Home30/> */}
    {/*  <Home31/> */}
-   <Home35></Home35>
-    </>
-  )
+   {/* <Home35></Home35> */}
+   {/*  <Home36/> */}
+   {/* {Home41()} */}
+   <Home52/>
+</>
+)
 }
 
 export default App
