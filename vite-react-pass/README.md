@@ -74,8 +74,8 @@ interface SpaceProps extends React.HtmlAttributes<HtmlDivElement> {}
 
 - useSpringValue/useSpring/useSpring 函数重载/多个元素的动画 useSprings/动画依次 useTrail/useSpringRef 拿到动画的 ref/多个动画安排 useChain
 - 实现笑脸动画
-
 - part1 网格
+
 ```jsx
 STROKE_WIDTH 0.5
 x2 -> MAX_WIDTH 150
@@ -119,6 +119,7 @@ viewbox = 0 0 150 100
 ```
 
 - part2 笑脸
+
 ```jsx
 COORDS = [
     [50,30],
@@ -160,6 +161,7 @@ useChain([gridRef,boxApi],[0,1],1500)
 ```
 
 ## 24 动画结合手势
+
 ```jsx
 npm i @react-spring/web @use-gesture/react -D
 
@@ -195,6 +197,7 @@ export default Viewpager
 ```
 
 ## 26 tailwindcss 原子化的css框架
+
 安装
 
 ```
@@ -203,24 +206,29 @@ npm install tailwindcss @tailwindcss/vite -D
 App.css
 @import "tailwindcss";
 ```
+
 ### 介绍
+
 tailwindcsss是一个流行的原子化css框架。传统的css写法是定义class，然后在class内部写样式。而原子化css是通过预定义一些class样式，通过组合class完成样式的编写。
 预设的的class可以通过配置文件修改值，
 使用
+
 - text-[14px]
 - @layer aaa
 - @apply
 
 module.css使用
+
 - className会➕hash，可以通过vite.config.js generateScopedName 配置
 - :global(.class) 是全局；使用直接用类名
 - :local(.class) 是局部；与全局相反
 - globalModulePaths 匹配全局的module.css
 - localsConvention 导出的对象的key就会变成驼峰的
-- scopeBehaviour:'global' 
-总结: module.css用来防止样式冲突，bem是从规范上限制不可靠。module.css是从编译上避免命名冲突。组件开发都有模块化的需求
+- scopeBehaviour:'global'
+  总结: module.css用来防止样式冲突，bem是从规范上限制不可靠。module.css是从编译上避免命名冲突。组件开发都有模块化的需求
 
 ## 30 Message组件的开发
+
 - useStore msgList add remove clear update
 - useTimer
 - MessageProvider
@@ -235,18 +243,23 @@ module.css使用
 - useImperative的是某个时机，才修改的。 我们是先执行了useMessage ，在设置的MessageRef.current
 
 ## 31popover气泡卡片的开发
+
 - 计算浮动位置float-ui npm install @floating-ui/react -D
 - 了解hooks useFloating useHover useInteractions
 - + useDiss useFloating配置offset、placement、 <FloatArrow></FloatArrow>
 - 边界处理，如果出现在上方，滚动到不可视，应该变到下方 flip中间件
 - 封装 props {content,open,openChange,placement,trigger,className,style }
 - createPortal挂在body下
+
 ## 32项目里如何快速定位组件源码
+
 - npm i click-to-react-component
 - 原理，_reactFiber -> debugFiber(可以层层找到父filber) ，_debuggerSource(定位源码行列号位置)
 - ui实现，定义框选样式，target是个state，设置dataset属性，mousemove改变target，从而获取 [data-xx]的样式。
 - ui实现，popover是通过 @floating-ui实现的
+
 ## 35colorPicker颜色选择器组件
+
 - 布局 colorPickerPanel + colorInput ✅
 - colorPickerPanel = Palette ✅ + Slider
 - type color ✅
@@ -258,3 +271,556 @@ module.css使用
 - 初始化颜色不对，最开始也要计算一次滑块位置 ✅
 - 支持受控和非受控组件 ✅
 - 色展示input （h l） ✅
+
+## 36实现Onboard组件（tour组件）
+
+- div的width+height+四边boardWidth
+- 实现mask移动的动画，改变boardWidth+transition
+- 外层封装一层，加上上一步下一步的切换
+  注意：
+
+## 52实现todo list
+
+1.拖拽插入（高亮）
+
+2.拖出删除（垃圾桶高亮）
+
+3.chekbox勾选
+
+实现步骤
+
+### 安装
+
+```
+npx create-vite
+npm install -D tailwindcss postcss autoprefixer
+
+npx tailwindcss init -p
+```
+
+新建TodoList/index.tsx
+
+```tsx
+import {FC} from 'react'
+interface ToDoListProps {
+}
+export const ToDoList:FC<TodoListProps> = (props)=>{
+return <div></div>
+}
+```
+
+安装tailWind，并配置
+
+设置ToDoList/index.tsx的基本样式,并在`App.tsx`引入
+
+```tsx
+import {FC} from 'react'
+interface ToDoListProps {
+}
+export const ToDoList:FC<TodoListProps> = (props)=>{
+return <div className='w-1000 h-600 m-auto mt-10 p-10 border-2-black'></div>
+}
+```
+
+因为像w-100这样的样式内置的className没有，需要在tailwind.config.js里配置(此处配置无效，后使用类似 `w-[1000px]`解决
+
+继续写布局
+```tsx
+export const ToDoList:FC<TodoListProps> = (props)=>{
+return <div className='w-1000 h-600 m-auto mt-10 p-10 border-2-black flex justify-between items-start'>
+  <div className='flex-2 h-full mr-[10px] bg-blue-400 overflow-auto'></div>
+  <div className='flex-1 h-full bg-blue-400'></div>
+</div>
+}
+```
+父元素flex，子元素2比1，margin-right:10px h-full是高100%
+
+继续添加组件List、GarbageBin、NewItem三个组件
+```tsx
+import { FC } from "react";
+import { NewItem } from "./NewItem";
+import { GarbageBin } from "./GarbageBin";
+import { List } from "./List";
+import classNames from "classnames";
+interface TodoListProps {}
+
+export const TodoList: FC<TodoListProps> = (props) => {
+  return (
+    <div
+      className={classNames(
+        "w-[1000px] h-[600px] m-auto mt-10 p-10",
+        "border-2-black",
+        "flex justify-between items-start"
+      )}
+    >
+      <div className="flex-2 h-full mr-[10px] bg-blue-400 overflow-auto">
+        <List></List>
+      </div>
+      <div className={classNames("flex-1 h-full', 'flex flex-col justify-start")}>
+        <NewItem></NewItem>
+        <GarbageBin className="mt-100"></GarbageBin>
+      </div>
+    </div>
+  );
+};
+```
+多行className使用`classNames`分
+
+继续添加GarbageBin.tsx
+```tsx
+import classNames from "classnames"
+interface GarbageBinProps {
+    className:string | string[]
+}
+export  function GarbageBin(props:GarbageBinProps) {
+    const cs = classNames('h-100 b-2-black',props.className)
+return <div className={cs}></div>
+}
+```
+继续添加newItem.tsx
+```tsx
+import classNames from "classnames"
+import { FC } from "react"
+
+interface NewItemProps{
+    className?: string | string[]
+}
+
+export const NewItem: FC<NewItemProps> = (props) => {
+  
+    const cs = classNames(
+        "h-[200px] border-2 border-black",
+        "bg-green-300",
+        props.className
+    );
+
+    return <div className={cs}></div>
+}
+```
+
+List.tsx
+```tsx
+import classNames from "classnames"
+import { FC } from "react"
+
+interface ListProps{
+    className?: string | string[]
+}
+
+export const List: FC<ListProps> = (props) => {
+  
+    const cs = classNames(
+        "h-full border-2 border-black",
+        props.className
+    );
+
+    return <div className={cs}></div>
+}
+```
+继续实现List
+```tsx
+export const List: FC<ListProps> = (props) => {
+  
+    const cs = classNames(
+        "h-full",
+        props.className
+    );
+
+    return <div className={cs}>
+        <Item></Item>
+        <Item></Item>
+        <Item></Item>
+    </div>
+}
+
+function Item(){
+    return <div className={classNames('h-[100px] border-2 border-black bg-blue-300 mb-[10px] p-[10px]',"flex justify-start items-center","text-xl tracking-wide")}>
+        <input type="checkbox" className="w-[40px] h-[40px] mr-[10px]"/>
+        <p>待办事项</p>
+    </div>
+}
+```
+
+继续GarbageBin
+```tsx
+import classNames from "classnames"
+interface GarbageBinProps {
+    className:string | string[]
+}
+export  function GarbageBin(props:GarbageBinProps) {
+    const cs = classNames('h-[100px] border-2 border-black','bg-orange-300','leading-200 text-center text-2xl','cursor-move select-none',props.className)
+return <div className={cs}>垃圾箱</div>
+}
+```
+
+添加 react-dnd 来做拖拽
+```cmd
+npm install react-dnd react-dnd-html5-backend
+```
+main.tsx引入DndProvider
+```tsx
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import { DndProvider } from "react-dnd";
+// @ts-ignore
+import { ClickToComponent } from "click-to-react-component";
+import { HTML5Backend } from "react-dnd-html5-backend";
+createRoot(document.getElementById("root")!).render(
+  <>
+    <ClickToComponent />
+    <DndProvider backend={HTML5Backend}>
+      <App />
+    </DndProvider>
+  </>
+```
+
+NewItem.tsx使用useDrag
+```tsx
+import classNames from "classnames"
+import { FC, useEffect, useRef } from "react"
+import { useDrag } from "react-dnd"
+
+interface NewItemProps{
+    className?: string | string[]
+}
+
+export const NewItem: FC<NewItemProps> = (props) => {
+   const [{isDragging},drag] =  useDrag(({
+        type:'new-item',
+        collect(monitor) {
+            return {
+                isDragging:monitor.isDragging()
+            }
+        },
+    }))
+    const ref = useRef(null);
+    const cs = classNames(
+        "h-[100px] border-2 border-black",
+        "leading-100 text-center text-2xl",
+        "bg-green-300",
+        "cursor-move select-none",
+        isDragging?"border-dashed bg-white":"",
+        props.className
+    );
+    useEffect(()=>{
+        drag(ref)
+    },[])
+    return <div ref={ref} className={cs}>新的待办事项</div>
+}
+```
+List的Item也添加drag
+```tsx
+function Item() {
+  const ref = useRef(null);
+  const [{ isDragging }, drag] = useDrag({
+    type: "list-item",
+    collect(monitor) {
+      return { isDragging: monitor.isDragging() };
+    },
+  });
+  useEffect(() => {
+    drag(ref);
+  }, []);
+  return (
+    <div
+      className={classNames(
+        "h-[100px] border-2 border-black bg-blue-300 mb-[10px] p-[10px]",
+        "flex justify-start items-center",
+        "text-xl tracking-wide",
+        isDragging ? "bg-white border-dashed" : ""
+      )}
+      ref={ref}
+    >
+      <input type="checkbox" className="w-[40px] h-[40px] mr-[10px]" />
+      <p>待办事项</p>
+    </div>
+  );
+}
+```
+
+
+垃圾箱添加 useDrop
+```tsx
+export function GarbageBin(props: GarbageBinProps) {
+  const ref = useRef(null);
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: "list-item",
+    drop(item) {},
+    collect(monitor) {
+      return {
+        isOver: monitor.isOver(),
+      };
+    },
+  }));
+  useEffect(() => {
+    drop(ref);
+  }, []);
+  const cs = classNames(
+    "h-[200px] border-2 border-black",
+    "bg-orange-300",
+    "leading-[200px] text-center text-2xl",
+    "cursor-move select-none",
+    isOver?'bg-yellow-400 border-dashed':'',
+    props.className
+  );
+  return (
+    <div ref={ref} className={cs}>
+      垃圾箱
+    </div>
+  );
+}
+```
+更新的item拖拽到gap
+[text](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5510f73bb0454c99aaa847abce813b40~tplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.image#%3Fw%3D1268%26h%3D1170%26s%3D64789%26e%3Dpng%26b%3D9dc4f8)
+
+Gap组件
+```tsx
+function Gap() {
+  const ref = useRef(null);
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: "new-item",
+    drop(item) {
+    
+    },
+    collect(monitor) {
+      return {
+        isOver: monitor.isOver(),
+      };
+    },
+  }));
+  useEffect(() => {
+    drop(ref);
+  }, []);
+  const cs = classNames("h-[10px]", isOver ? "bg-red-300" : "");
+  return <div ref={ref} className={cs}></div>;
+}
+```
+
+接下来处理逻辑 zustand
+安装 zustand
+```cmd
+npm install zustand --save
+```
+创建 TodoList/Store.ts
+```tsx
+import {create} from 'zustand'
+interface ListItem {
+    id:string,
+    content:string,
+    status:'done'|'todo'
+}
+type State = {
+    list:ListItem[]
+}
+type Action =  {
+    addItem(item:ListItem):void
+    delItem(id:string):void
+    updateItem(item:ListItem):void
+} 
+
+export const ListStore = create<State&Action>((set)=>({
+    list:[],
+    addItem:(item:ListItem)=>{
+       set((state)=>{return {
+        list:[...state.list,item]
+       }})
+    },
+    delItem:(id:string)=>{
+        set((state)=>{return {
+        list: state.list.filter(v=>v.id!==id)
+       }})
+    },
+    updateItem:(item:ListItem)=>{
+          set((state)=>{return {
+        list: state.list.map(v=>(v.id===item.id?item:v))
+       }})
+    }
+}))
+```
+List里使用
+```tsx
+import classNames from "classnames";
+import { FC, Fragment, useEffect, useRef } from "react";
+import { useDrag, useDrop } from "react-dnd";
+import { Item } from "./Item";
+import { Gap } from "./Gap";
+import { useTodoListStore } from "./Store";
+interface ListProps {
+  className?: string | string[];
+}
+
+export const List: FC<ListProps> = (props) => {
+  const list = useTodoListStore((state) => state.list);
+  const cs = classNames("h-full ", props.className);
+
+  return (
+    <div className={cs}>
+      {list.length
+        ? list.map((v) => (
+            <Fragment key={v.id}>
+              <Gap></Gap>
+              <Item data={v}></Item>
+            </Fragment>
+          ))
+        : "暂无待办事项"}
+          <Gap></Gap>
+    </div>
+  );
+};
+```
+item 添加data属性
+
+gap 添加store到addItem方法
+```tsx
+import classNames from "classnames";
+import { useEffect, useRef } from "react";
+import { useDrag, useDrop } from "react-dnd";
+import { useTodoListStore } from "./Store";
+export function Gap() {
+  const addItem = useTodoListStore((state) => state.addItem);
+  const ref = useRef(null);
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: "new-item",
+    drop(item) {
+      addItem({
+        id: Math.random().toString().slice(2,8),
+        status: "todo",
+        content: "待办事项",
+      });
+    },
+    collect(monitor) {
+      return {
+        isOver: monitor.isOver(),
+      };
+    },
+  }));
+  useEffect(() => {
+    drop(ref);
+  }, []);
+  const cs = classNames("h-[10px]", isOver ? "bg-red-300" : "");
+  return <div ref={ref} className={cs}></div>;
+}
+```
+删除功能 Item
+Item
+```tsx
+export function Item(props: ItemProps) {
+  const [{ isDragging }, drag] = useDrag({
+    item(){
+      return {
+        id:data.id
+      }
+    }
+  });
+}
+```
+GarbageBin的delItem
+```tsx
+export function GarbageBin(props: GarbageBinProps) {
+  const delItem = useTodoListStore((state)=>state.delItem)
+  const [{ isOver }, drop] = useDrop(() => ({
+    drop(item:ListItem) {
+      delItem(item.id)
+    },
+  }));
+}
+```
+
+编辑功能Item.tsx
+content + status
+```tsx
+import classNames from "classnames";
+import { useEffect, useRef, useState } from "react";
+import { useDrag } from "react-dnd";
+import { ListItem, useTodoListStore } from "./Store";
+interface ItemProps {
+  data: ListItem;
+}
+export function Item(props: ItemProps) {
+  const [isEdit, setIsEdit] = useState(false);
+  const [editContent, setEditContent] = useState(data.content);
+  const updateItem = useTodoListStore((state)=>state.updateItem)
+  return (
+    <div
+      onDoubleClick={() => setIsEdit(true)}
+    >
+      <input type="checkbox"  checked={data.status==='done'} onChange={(e)=>{
+        updateItem({
+          id:data.id,
+          content:data.content,
+          status:e.target.checked?'done':'todo'
+        })
+      }}/>
+      <p>
+        {isEdit ? (
+          <input
+          className="w-140 h-20"
+            onChange={(e) => {
+              setEditContent(e.target.value);
+            }}
+            value={editContent}
+            onBlur={(e)=>{
+              setIsEdit(false)
+              updateItem({
+                id:data.id,
+                content:editContent,
+                status:data.status
+              })
+            }}
+          ></input>
+        ) : (
+          data.content
+        )}
+      </p>
+    </div>
+  );
+}
+```
+
+拖拽插入的顺序优化
+gap + id (id可能为空)
+addItem(item,id)
+
+zustand加上persist插件
+```tsx
+const stateCreateor: StateCreator<State & Action> = (set) => ({
+
+});
+export const useTodoListStore = create<State & Action>()(persist(stateCreateor,{
+    name:'todoList'
+}));
+
+```
+
++拖拽排序
+
++动画 react-spring
+```tsx
+npm install --save @react-spring/web
+```
+todoList
+```tsx
+export const List: FC<ListProps> = (props) => {
+  const transitions = useTransition(list, {
+    from: { transform: "translate3d(-100%,0,0)", opacity: 0 },
+    enter: { transform: "translate3d(0%,0,0)", opacity: 1 },
+    leave: { transform: "translate3d(100%,0,0)", opacity: 0 },
+    keys: list.map((v) => v.id), // key放在这了
+  });
+  return (
+    <div className={cs}>
+      {list.length ? (
+        transitions((style,v)=>(
+       <animated.div style={style}>
+          <Gap id={v.id}></Gap>
+          <Item data={v}></Item>
+        </animated.div>
+        ))
+      ) : (
+        "暂无待办事项"
+      )}
+      <Gap id={""}></Gap>
+    </div>
+  )
+};
+```
