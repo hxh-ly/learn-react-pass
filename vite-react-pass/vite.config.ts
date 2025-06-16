@@ -12,15 +12,7 @@ export default defineConfig({
     },
     modules: {
       // generateScopedName: "guang_[name]_[local]_[hash:base64:5]" 
-      generateScopedName:function (name,filename,css) {
-        console.log(name,filename,css);
-        return 'xxx'
-      },
-      getJSON:function (cssFileName,json,outputFileName) {
-        console.log(cssFileName,json,outputFileName);
-      },
-      globalModulePaths: [/hxh/],
-      localsConvention:'camelCase'
+    
     }
   },
 })

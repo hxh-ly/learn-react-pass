@@ -824,3 +824,242 @@ export const List: FC<ListProps> = (props) => {
   )
 };
 ```
+
+## 53.ReactPlayground项目实战
+需求：左边写代码，右边可以实时预览，右边可以看到编译后的代码
+实现思路：
+首先是编译，@babel/standalone,babel的浏览器版本，可以见tsx编译成js
+安装
+```cmd
+npm i --save @babel/standalone
+npm i --save-dev @types/babel_standalone
+```
+体验
+```tsx
+export function TestBabel() {
+  const textAreaRef = useRef(null);
+
+  const code = `import { useEffect, useState } from "react";
+
+  function App() {
+    const [num, setNum] = useState(() => {
+      const num1 = 1 + 2;
+      const num2 = 2 + 3;
+      return num1 + num2
+    });
+  
+    return (
+      <div onClick={() => setNum((prevNum) => prevNum + 1)}>{num}</div>
+    );
+  }
+  
+  export default App;
+    `;
+  const compile = () => {
+    if (!textAreaRef.current) {
+      return;
+    }
+    const res = transform(textAreaRef.current.value, {
+      presets: ["react", "typescript"],
+      filename: "guang.tsx",
+    });
+    console.log(res.code)
+  };
+  return (
+    <>
+      <textarea ref={textAreaRef} style={{ width: '500px', height: '300px'}} defaultValue={code}></textarea>
+      <button onClick={compile}>编译</button>
+    </>
+  );
+}
+```
+但编译的代码不能跑，主要是import语句这里，我们可以把一段JS代码，用URL.createObjectUrl(new Blob(code,{type:'application/javascript'}))
+
+所以如何编译呢，我们维护App.tsx通过URL.createObjectUrl变为一个blob url,替换import的路径，使用babel插件。
+
+babel编译的阶段 `parse`/`transform`/`generate`
+只要在对Importdeclaration的AST做处理，把source.value替换为对应文件的blob url就行了
+![alt text](./readmeImg/image.png)
+比如这样写
+```tsx
+function App(){
+  const code1 = `function add(a, b) {
+        return a + b;
+    }
+    export { add };`;
+  const url = URL.createObjectURL(new Blob(code1,{type:'application/javascript'}))
+  const code = `import {add} from './add.ts';console.log(add)`;
+  const transformImportSourcePlugin:PluginObject = {
+    visitor:{
+      ImportDeclaration(path) {
+        path.node.source.value = url;
+      }
+    }
+  }
+  function onClick(){
+    const res = transform(code,{
+      persets:['react','typescript'],
+      fileName:'guang.ts',
+      plugins:[transformImportSourcePlugin]
+    })
+    console.log(res.code)
+  }
+  return (<div>
+    <button onClick={onClick}>编译</button>
+  </div>)
+}
+export default App
+```
+这里用babel插件的方式对import的source做替换，用到的`npm i --save-dev @types/babel__core`,把ImportDeclaration的source的值改为blob url
+
+下一个问题：如果引入的是react和react-dom的包，这些也不是在左侧写的代码，这时候可以用 import maps的机制
+```html
+<script type='importmap'>
+  {
+    "imports":{
+      "react":"https://esm.sh/react@18.2.0"
+    }
+  }
+</script>
+<script type='module'>
+  import React from 'react';
+  console.log(React)
+</script>
+```
+
+编辑器部分怎么做？
+安装 `npm install @monaco-editor/react`
+体验
+```tsx
+export function testEditor(){
+     const code =`import { useEffect, useState } from "react";
+
+function App() {
+    const [num, setNum] = useState(() => {
+        const num1 = 1 + 2;
+        const num2 = 2 + 3;
+        return num1 + num2
+    });
+
+    return (
+        <div onClick={() => setNum((prevNum) => prevNum + 1)}>{num}</div>
+    );
+}
+
+export default App;
+`;;
+    return <Editor height='500px' defaultLanguage="javascript" defaultValue={code}></Editor>
+}
+```
+
+预览部分，iframe，加通讯机制，左边编辑器的结果，编译后传递到iframe渲染
+```tsx
+import React from 'react';
+import iframeRaw from './iframe.html?raw'
+const iframeUrl = URL.createObjectURL(new Blob[iframeRaw,{type:'text/html'}])
+const Preview = ()=>{
+  return <>
+  <iframe src={iframeUrl} style={{height:'100%',width:'100%',padding:0,border:'none'}}></iframe>
+  </>
+}
+export default Preview;
+```
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Preview</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+<script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.2.0",
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0"
+    }
+  }
+</script>
+<script>
+
+</script>
+<script type="module">
+  import React, {useState, useEffect} from 'react';
+  import ReactDOM from 'react-dom/client';
+
+  const App = () => {
+    return React.createElement('div', null, 'aaa');
+  };
+
+  window.addEventListener('load', () => {
+    const root = document.getElementById('root')
+    ReactDOM.createRoot(root).render(React.createElement(App, null))
+  })
+</script>
+
+<div id="root">
+  <div style="position:absolute;top: 0;left:0;width:100%;height:100%;display: flex;justify-content: center;align-items: center;">
+    Loading...
+  </div>
+</div>
+
+</body>
+</html>
+```
+### 总结
+分析playground的实现思路
+import
+import maps
+编辑器
+iframe
+
+## 54.ReactPlayground布局、代码编辑器
+布局可拖拽
+`npm install --save allotment`
+
+代码编辑器
+- 传入`EditorFile{name,value,language}`
+- Editor的onMount处理 jsx提示处理 +cmd处理+ts提示+ata自动下载
+- EditorProps{file,onChange,options}
+- Editor的样式 options[预览图、滚动条]
+- 根据内容下载对应包的.d.ts文件 `npm install --save @typescript/ata -f`
+
+## 55.ReactPlayground多文件切换
+要实现多文件切换，右侧preview也要拿到数据，如何实现多文件共享数据，要用到context
+PlaygroundContext.ts
+```ts
+interface File {
+  name:string,
+  value:string,
+  language:string
+}
+export interface Files {
+  [key:string]:File
+}
+interface PlaygroundContextProps {
+  files:Files，
+  selectedFiles:string,
+  setSelectedFileName:(f:string)=>void,
+  setFile:(f:File)=>void,
+  addFile:(f:string)=>void，
+  removeFile:(f:string)=>void,
+  updateFileName:(oldF:string,newF:string)=>void
+}
+
+export const context = createContext<PlaygroundContextProps>({
+selectedFiles:'App.tsx'
+} as PlaygroundContextProps)
+```
+提供一个PlaygroundProvider
+- 设计props value = {Files,selectedFile,setFiles,setSelectedFile,addFile,removeFile,updateFile }
+- mock文件files作为provider的初始值
+- 设计tab切换，样式,+优化横向滚动条
+- 实现fileName2language
+- 更改文件内容时需要在editChange更新Files + lodash `npm install --save lodash-es  npm install --save-dev @types/lodash-es`
