@@ -7,7 +7,7 @@ export interface EditFiles {
 }
 export interface EditViewProps {
   file: EditFiles;
-  onChange: EditorProps["onChange"];
+  onChange?: EditorProps["onChange"];
   options?: any;
 }
 

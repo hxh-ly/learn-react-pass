@@ -8,8 +8,8 @@ export function CodeEditor() {
   const file = files[selectedFiles];
   const onChange = (e) => {
     console.log('change')
-    files[selectedFiles].value = e;
-    setFiles(files)
+    files[file.name].value = e;
+    setFiles({...files})
   };
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
