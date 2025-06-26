@@ -4,17 +4,22 @@ import { PlaygroundContext, Files } from "../../PlaygroundContext";
 import { useContext } from "react";
 import { debounce } from "lodash-es";
 export function CodeEditor() {
-  const { files, selectedFiles,setFiles } = useContext(PlaygroundContext);
+  const { files, theme, selectedFiles, setFiles } =
+    useContext(PlaygroundContext);
   const file = files[selectedFiles];
   const onChange = (e) => {
-    console.log('change')
+    console.log("change");
     files[file.name].value = e;
-    setFiles({...files})
+    setFiles({ ...files });
   };
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <FileNameList></FileNameList>
-      <EditorView file={file} onChange={debounce(onChange,500)}></EditorView>
+      <EditorView
+        options={{ theme: `vs-${theme}` }}
+        file={file}
+        onChange={debounce(onChange, 500)}
+      ></EditorView>
     </div>
   );
 }
