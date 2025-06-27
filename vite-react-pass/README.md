@@ -2206,7 +2206,9 @@ function isDepsEqual(deps, newDeps) {
     return true;
 }
 ```
+
 这样，导出MiniReact的所有函数
+
 ```js
 (function(){
 const MiniReact = {
@@ -2220,15 +2222,22 @@ window.MiniReact = MiniReact;
 ```
 
 ### 总结
+
 实现createElement，
 render为渲染vdom，
 使用scheduler机制去从wipRoot去reconcile，nextUnitOfWork不存在之后，去commitRoot();
 reconcile递归的顺序是child，sibling；根据type是否是函数式还是原生，是reconcile子节点
 commitRoot实现去增删改dom，执行effect的副作用
 
+## 64. 和react源码的不同
+
+略
+
 ## 65. react的并发机制是怎么实现的
+
 场景：输入框+筛选高亮列表。如果顺序更新，如果要处理的fiber节点比较多，渲染一次就比较慢，这时候用户输入的内容可能就不能及时渲染出来。 react18实现了这样的一套并发机制。
 并发就是在循环里多了打断和恢复的机制，所以代码是这样的：
+
 ```js
 function workLoopConcurrent(){
   while(workInProgress!==null && !shouldYield()) {
@@ -2236,10 +2245,12 @@ function workLoopConcurrent(){
   }
 }
 ```
+
 怎么打断：每个fiber节点，shouldYield返回true时终止这次循环
 怎么恢复：每次setState引起的渲染都是有schedule调度执行的，它维护了一个任务队列，上一个执行完就执行下一个，没渲染完的话，再加一个新任务不就行了。
 怎么判断是中断还是渲染完：wip是否为空
 shouldYield是怎么判断：根据过期时间，每个任务开始记录一个时间，如果处理完超时，就打断
+
 ```js
 function shouldYieldToHost(){
   var timeElapsed = exports.unstable_now() - startTime;
@@ -2251,10 +2262,12 @@ function shouldYieldToHost(){
 }
 
 ```
+
 会根据任务优先级打断吗：不会，任务优先级只影响Scheduler里的taskQueue的排序结果，但打断只会根据过期时间。
 那这样高任务不还是得不到立即执行？也不会，一个时间分片5ms，会按优先级排序的任务来执行，让高优先级任务得到及时处理。
 
 react中的Schedule优先级
+
 ```js
 var ImmediatePriority = 1; // click input 
 var UserBlockingPriority = 2; //scroll drag mouseover
@@ -2262,15 +2275,18 @@ var NormalPriority = 3;
 var LowPriority = 4; 
 var IdlePriority = 5;
 ```
+
 并发模式下不同的setState的优先级不同，就是通过指定Scheduler的优先级来实现的
 Scheduler是分离的一个包，React有自己的一套优先级机制 Lane；
 react还给事件也区分了优先级：
+
 - DiscreteEventPriority 离散事件优先级
 - ContinuousEventPriorty 连续事件优先级
 - DefaultEventPriority 默认事件优先级
 - IdleEventPriority 空闲事件优先级
 
 react通过Schedule时，优先级时怎么转的： 先把Lane转化为事件优先级，然后在转化为Scheduler优先级。
+
 ```js
 switch(lanesToEventPriority(nextLanes)) {
   case DiscreteEventPriority:
@@ -2287,6 +2303,7 @@ switch(lanesToEventPriority(nextLanes)) {
 
 react并发模式的一些api:
 同步执行：
+
 ```js
 function renderRootSync(root,lane) {
   do{
@@ -2303,7 +2320,9 @@ function workLoopSync(){
   }
 }
 ```
+
 并发执行：
+
 ```js
 function renderRootConcurrent(root,lane){
     do{
@@ -2324,16 +2343,21 @@ function workLoopConcurrent(){
 结论：能开启设置时间分片的lane的api都是基于并发的api
 也不是所有的特性都要时间分片，只有部分需要：
 那就是如果这次schedule更新里包含了并发特性，就是用workLoopConcurrent，否则走workLoopSync
+
 ```js
 var shouldTimeSlice = !includesBlockingLane(root,lanes) && !includesExpiredLane(root,lanes)
 var exitStatus = shouldTimeSlice ? workLoopConcurrent(root,lanes):workLoopSync(root,lanes)
 ```
+
 useTransition useDeferredValue
+
 ```js
  const [isPending,startTransition] = useTransition()
 ```
+
 列子标上不同的优先级
 useTransition 是把回调函数里的更新设置为连续事件的优先级，比离散事件的优先级低。useDeferredValue 则是延后更新 state 的值。
+
 ```jsx
 export default function App() {
   const [text, setText] = useState('guang');
@@ -2370,6 +2394,7 @@ function App() {
 ```
 
 ### 总结
+
 react的渲染机制 render + commit，render实现vdom转fiber的reconcile，之后commit阶段执行增删改dom。更新ref，调用effect回调和生命周期函数。
 setState引起多次渲染，重要程度不同，优先级不同，react为了高优先级的更新先渲染，实现了并发模式。
 打断和恢复，实现shouldYield的时间分片机制
@@ -2379,14 +2404,243 @@ react的lanes优先级机制，基于二进制设计。 调度任务时先把lan
 ## 66.Ref的实现原理
 
 ref的使用：
+
 - 函数组件利用useRef保存Dom引用或者自定义的值，类组件里用createRef
 - forwardRef可以转发子组件的ref给父组件，还可以用useImperativeHandle来修改转发ref的值
 
 ### 总结
+
 render阶段处理原生标签也就是HostComponent类型的时候，如果有ref属性就给fiber.flags加一个标记
 commit阶段会在layout操作完dom后遍历fiber链表更新HostComponent的ref，也就是把fiber.stageNode赋值给ref.current.
 react不不关心ref上哪里创建的，createRef、useRef、普通对象，或者forwardRef传过来都行，只是把普通对象Object.seal了一下。
 forwardRef上单独创建了React Element类型，在beginWork处理到它的时候做了特殊处理，也就是把它的ref作为第二个参数传给函数组件，这就是ref转发的原理
 useImperativeHandle的底层实现就是useEffect，只不过执行的函数是它指定的，bind了传入的ref和create函数，这样在layout阶段调用hook的Effect函数的时候就可以更新ref了。
 
-## 67
+## 67.低代码编辑器：核心数据结构、全局store
+
+左边是物料区，中间是画布区，右边是数据编辑区
+可以从物料区拖拽组件到中间的画布区，来可视化搭建页面
+画布区组件选中后，在属性编辑区修改属性：
+左边可以看到组件的大纲视图，用树展示组件嵌套结构，也可以直接看生成的json
+低代码编辑器的核心，就是json,拖拽不是低代码编辑器必须的。
+
+```tsx
+npx create-vite lowcode-editor
+npm install
+npm run dev
+npm install -D tailwindcss postcss autoprefixer (注意版本)
+
+npx tailwindcss init -p (注意版本)
+// src/editor/index.tsx
+export default function LowcodeEditor() {
+    return <div>LowcodeEditor</div>
+}
+
+// App.tsx
+import LowcodeEditor from './editor';
+
+function App() {
+
+  return (
+    <LowcodeEditor/>
+  )
+}
+
+export default App
+
+```
+
+实现布局 `npm install --save allotment`
+
+```tsx
+import { Allotment } from "allotment";
+import 'allotment/dist/style.css';
+
+export default function ReactPlayground() {
+    return <div className='h-[100vh] flex flex-col'>
+        <div className=''>
+           Header
+        </div>
+        <Allotment>
+            <Allotment.Pane preferredSize={240} maxSize={300} minSize={200}>
+                Materail
+            </Allotment.Pane>
+            <Allotment.Pane>
+                EditArea
+            </Allotment.Pane>
+            <Allotment.Pane preferredSize={300} maxSize={500} minSize={300}>
+                Setting
+            </Allotment.Pane>
+        </Allotment>
+    </div>
+}
+```
+
+写header的样式
+
+```tsx
+  <div className='h-[60px] flex items-center border-b-[1px] border-[#000]'>
+           Header
+  </div>
+```
+
+替换具体的组件
+
+```tsx
+import { Allotment } from "allotment";
+import 'allotment/dist/style.css';
+import { Header } from "./components/Header";
+import { EditArea } from "./components/EditArea";
+import { Setting } from "./components/Setting";
+import { Material } from "./components/Material";
+
+export default function ReactPlayground() {
+    return <div className='h-[100vh] flex flex-col'>
+        <div className='h-[60px] flex items-center border-b-[1px] border-[#000]'>
+            <Header />
+        </div>
+        <Allotment>
+            <Allotment.Pane preferredSize={240} maxSize={300} minSize={200}>
+                <Material />
+            </Allotment.Pane>
+            <Allotment.Pane>
+                <EditArea />
+            </Allotment.Pane>
+            <Allotment.Pane preferredSize={300} maxSize={500} minSize={300}>
+                <Setting />
+            </Allotment.Pane>
+        </Allotment>
+    </div>
+}
+```
+
+分别写下几个组件
+
+```tsx
+editor/components/Header.tsx
+
+export function Header() {
+    return <div>Header</div>
+}
+editor/components/Material.tsx
+
+export function Material() {
+    return <div>Material</div>
+}
+editor/components/EditArea.tsx
+
+export function EditArea() {
+    return <div>EditArea</div>
+}
+editor/components/Setting.tsx
+
+export function Setting() {
+    return <div>Setting</div>
+}
+```
+
+全局数据使用zustand `npm install --save zustand`
+
+创建editor/stores/components.tsx 保存全局的那个组件json：
+
+```tsx
+import { create } from "zustand";
+export interface Component {
+  id: number;
+  name: string;
+  props: any;
+  children?: Component[];
+  parentId?: number;
+}
+
+interface State {
+  components: Component[];
+}
+interface Action {
+  addComponent: (item: Component, parentId?: number) => void;
+  deleteComponent: (id: number) => void;
+  updateComponentProps: (id: number, props: any) => void;
+}
+
+export const useComponentsStore = create<State & Action>((set, get) => {
+  return {
+    components: [
+      {
+        id: 1,
+        name: "Page",
+        props: {},
+        desc: "页面",
+      },
+    ],
+    addComponent: (item: Component, parentId?: number) => {
+      set((state) => {
+        if (parentId) {
+          let comp = getComponentById(parentId, state.components);
+          if (comp) {
+            if (comp.children) {
+              comp.children.push(item);
+            } else {
+              comp.children = [item];
+            }
+          }
+          item.parentId = parentId;
+          return { components: [...state.components] };
+        }
+        return { components: [...state.components, item] };
+      });
+    },
+    deleteComponent: (id: number) => {
+      if (!id) {
+        return;
+      }
+      const comp = getComponentById(id, get().components);
+      if (comp && comp.parentId) {
+        const parentComp = getComponentById(comp.parentId, get().components);
+        if (parentComp) {
+          parentComp.children = parentComp.children?.filter((v) => v.id !== id);
+        }
+      }
+      set({ components: [...get().components] });
+    },
+    updateComponentProps: (id: number, props: any) => {
+      if (!id) {
+        return;
+      }
+      const comp = getComponentById(id, get().components);
+      if (!comp) {
+        return;
+      }
+      set((state) => {
+        comp.props = { ...comp.props, ...props };
+        return { components: [...state.components] };
+      });
+    },
+  };
+});
+
+export function getComponentById(
+  id: number | null,
+  components: Component[]
+): Component | null {
+  if (!id) {
+    return null;
+  }
+  for (let item of components) {
+    if (item.id === id) {
+      return item;
+    }
+    if (item.children && item.children.length) {
+      let resComponent: Component | null = getComponentById(id, item.children);
+      if (resComponent) {
+        return resComponent;
+      }
+    }
+  }
+  return null;
+}
+
+```
+
+### 总结
+
+从物料区拖拽组件到画布，删除组件、在属性编辑区修改组件属性，都是对这个json对修改。
