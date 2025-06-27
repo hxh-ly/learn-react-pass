@@ -1,12 +1,11 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import LowcodeEditor from './editor';
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
+import LowcodeEditor from "./editor";
+
 function App() {
- return (
-    <LowcodeEditor/>
-  )
+  return <LowcodeEditor />;
 }
 
-export default App
+export default App;

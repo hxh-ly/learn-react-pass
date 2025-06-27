@@ -28,12 +28,15 @@ export const useComponentsStore = create<State & Action>((set, get) => {
     ],
     addComponent: (item: Component, parentId?: number) => {
       set((state) => {
-        if (parentId) {
+        console.log({parentId})
+        if (parentId!=undefined) {
           let comp = getComponentById(parentId, state.components);
           if (comp) {
             if (comp.children) {
+                console.log('bbb')
               comp.children.push(item);
             } else {
+                console.log('aaa')
               comp.children = [item];
             }
           }

@@ -2157,12 +2157,12 @@ function commitEffectHooks() {
     if (!fiber) {
       return;
     }
-    fiber.alternate?.effectHooks?.foreach((hook,index)=>{
+    fiber.alternate?.effectHooks?.foreach((hook, index) => {
       const deps = fiber.effectHooks[index];
-      if(!hook.deps || isDeepEqual(hook.deps,deps)) {
-        hook.cleanup?.()
+      if (!hook.deps || isDeepEqual(hook.deps, deps)) {
+        hook.cleanup?.();
       }
-    })
+    });
     runCleanup(fiber.child);
     runCleanup(fiber.sibling);
   }
@@ -2170,21 +2170,21 @@ function commitEffectHooks() {
     if (!fiber) {
       return;
     }
-    fiber.effectHooks.forEach((newHook,index)=>{
-      if(!fiber.alternate) {
+    fiber.effectHooks.forEach((newHook, index) => {
+      if (!fiber.alternate) {
         hook.cleanup = hook.callback(); // hook? todo
-        return
+        return;
       }
-      if(!newHook.deps) {
+      if (!newHook.deps) {
         hook.cleanup = hook.callback();
       }
-      if(newHook.deps.length>0) {
+      if (newHook.deps.length > 0) {
         const oldHook = fiber.alternate?.effectHooks[index];
-        if(!isDeepEqual(oldHook.deps,newHook.deps)) {
-           newHook.cleanup = newHook.callback();
+        if (!isDeepEqual(oldHook.deps, newHook.deps)) {
+          newHook.cleanup = newHook.callback();
         }
       }
-    })
+    });
     //遍历现在的effectHooks 没有alternate-执行返回；fiber没有依赖，执行；有依赖对比长度再看
     run(fiber.sibling);
     run(fiber.child);
@@ -2194,129 +2194,128 @@ function commitEffectHooks() {
 }
 
 function isDepsEqual(deps, newDeps) {
-    if(deps.length !== newDeps.length) {
-        return false;
-    }
+  if (deps.length !== newDeps.length) {
+    return false;
+  }
 
-    for(let i = 0; i < deps.length; i++) {
-        if(deps[i] !== newDeps[i]) {
-            return false;
-        }
+  for (let i = 0; i < deps.length; i++) {
+    if (deps[i] !== newDeps[i]) {
+      return false;
     }
-    return true;
+  }
+  return true;
 }
 ```
 
-这样，导出MiniReact的所有函数
+这样，导出 MiniReact 的所有函数
 
 ```js
-(function(){
-const MiniReact = {
-  createElement,
-  render,
-  useState,
-  useEffect
-}
-window.MiniReact = MiniReact;
-})()
+(function () {
+  const MiniReact = {
+    createElement,
+    render,
+    useState,
+    useEffect,
+  };
+  window.MiniReact = MiniReact;
+})();
 ```
 
 ### 总结
 
-实现createElement，
-render为渲染vdom，
-使用scheduler机制去从wipRoot去reconcile，nextUnitOfWork不存在之后，去commitRoot();
-reconcile递归的顺序是child，sibling；根据type是否是函数式还是原生，是reconcile子节点
-commitRoot实现去增删改dom，执行effect的副作用
+实现 createElement，
+render 为渲染 vdom，
+使用 scheduler 机制去从 wipRoot 去 reconcile，nextUnitOfWork 不存在之后，去 commitRoot();
+reconcile 递归的顺序是 child，sibling；根据 type 是否是函数式还是原生，是 reconcile 子节点
+commitRoot 实现去增删改 dom，执行 effect 的副作用
 
-## 64. 和react源码的不同
+## 64. 和 react 源码的不同
 
 略
 
-## 65. react的并发机制是怎么实现的
+## 65. react 的并发机制是怎么实现的
 
-场景：输入框+筛选高亮列表。如果顺序更新，如果要处理的fiber节点比较多，渲染一次就比较慢，这时候用户输入的内容可能就不能及时渲染出来。 react18实现了这样的一套并发机制。
+场景：输入框+筛选高亮列表。如果顺序更新，如果要处理的 fiber 节点比较多，渲染一次就比较慢，这时候用户输入的内容可能就不能及时渲染出来。 react18 实现了这样的一套并发机制。
 并发就是在循环里多了打断和恢复的机制，所以代码是这样的：
 
 ```js
-function workLoopConcurrent(){
-  while(workInProgress!==null && !shouldYield()) {
+function workLoopConcurrent() {
+  while (workInProgress !== null && !shouldYield()) {
     performUnitOfWork(workInProgress);
   }
 }
 ```
 
-怎么打断：每个fiber节点，shouldYield返回true时终止这次循环
-怎么恢复：每次setState引起的渲染都是有schedule调度执行的，它维护了一个任务队列，上一个执行完就执行下一个，没渲染完的话，再加一个新任务不就行了。
-怎么判断是中断还是渲染完：wip是否为空
-shouldYield是怎么判断：根据过期时间，每个任务开始记录一个时间，如果处理完超时，就打断
+怎么打断：每个 fiber 节点，shouldYield 返回 true 时终止这次循环
+怎么恢复：每次 setState 引起的渲染都是有 schedule 调度执行的，它维护了一个任务队列，上一个执行完就执行下一个，没渲染完的话，再加一个新任务不就行了。
+怎么判断是中断还是渲染完：wip 是否为空
+shouldYield 是怎么判断：根据过期时间，每个任务开始记录一个时间，如果处理完超时，就打断
 
 ```js
-function shouldYieldToHost(){
+function shouldYieldToHost() {
   var timeElapsed = exports.unstable_now() - startTime;
-  if(timeElapsed < frameInterval )  // 5ms
-  {
+  if (timeElapsed < frameInterval) {
+    // 5ms
     return false;
   }
   return true;
 }
-
 ```
 
-会根据任务优先级打断吗：不会，任务优先级只影响Scheduler里的taskQueue的排序结果，但打断只会根据过期时间。
-那这样高任务不还是得不到立即执行？也不会，一个时间分片5ms，会按优先级排序的任务来执行，让高优先级任务得到及时处理。
+会根据任务优先级打断吗：不会，任务优先级只影响 Scheduler 里的 taskQueue 的排序结果，但打断只会根据过期时间。
+那这样高任务不还是得不到立即执行？也不会，一个时间分片 5ms，会按优先级排序的任务来执行，让高优先级任务得到及时处理。
 
-react中的Schedule优先级
+react 中的 Schedule 优先级
 
 ```js
-var ImmediatePriority = 1; // click input 
+var ImmediatePriority = 1; // click input
 var UserBlockingPriority = 2; //scroll drag mouseover
 var NormalPriority = 3;
-var LowPriority = 4; 
+var LowPriority = 4;
 var IdlePriority = 5;
 ```
 
-并发模式下不同的setState的优先级不同，就是通过指定Scheduler的优先级来实现的
-Scheduler是分离的一个包，React有自己的一套优先级机制 Lane；
-react还给事件也区分了优先级：
+并发模式下不同的 setState 的优先级不同，就是通过指定 Scheduler 的优先级来实现的
+Scheduler 是分离的一个包，React 有自己的一套优先级机制 Lane；
+react 还给事件也区分了优先级：
 
 - DiscreteEventPriority 离散事件优先级
 - ContinuousEventPriorty 连续事件优先级
 - DefaultEventPriority 默认事件优先级
 - IdleEventPriority 空闲事件优先级
 
-react通过Schedule时，优先级时怎么转的： 先把Lane转化为事件优先级，然后在转化为Scheduler优先级。
+react 通过 Schedule 时，优先级时怎么转的： 先把 Lane 转化为事件优先级，然后在转化为 Scheduler 优先级。
 
 ```js
-switch(lanesToEventPriority(nextLanes)) {
+switch (lanesToEventPriority(nextLanes)) {
   case DiscreteEventPriority:
     schedulerPriorityLevel = ImmediatePriority;
     break;
   case ContinuousEventPriority:
     schedulerPriorityLevel = UserBlockingPriority;
   case NormalPriority:
-    schedulerPriorityLevel = DefaultEventPriority;  
+    schedulerPriorityLevel = DefaultEventPriority;
   case IdlePriority:
     schedulerPriorityLevel = IdleEventPriority;
 }
 ```
 
-react并发模式的一些api:
+react 并发模式的一些 api:
 同步执行：
 
 ```js
-function renderRootSync(root,lane) {
-  do{
+function renderRootSync(root, lane) {
+  do {
     try {
       workLoopSync();
-    } catch(thrownValue) {
-      handleError(root,thrownValue)
+    } catch (thrownValue) {
+      handleError(root, thrownValue);
     }
-  } while(true)
+  } while (true);
 }
-function workLoopSync(){
-  while(workInProgress!==null) {
-    performUnitOfWork(workInProgress)
+function workLoopSync() {
+  while (workInProgress !== null) {
+    performUnitOfWork(workInProgress);
   }
 }
 ```
@@ -2324,35 +2323,38 @@ function workLoopSync(){
 并发执行：
 
 ```js
-function renderRootConcurrent(root,lane){
-    do{
+function renderRootConcurrent(root, lane) {
+  do {
     try {
       workLoopConcurrent();
-    } catch(thrownValue) {
-      handleError(root,thrownValue)
+    } catch (thrownValue) {
+      handleError(root, thrownValue);
     }
-  } while(true)
+  } while (true);
 }
-function workLoopConcurrent(){
-  while(workInProgress!==null && !shouldYield()) {
-    performUnitOfWork(workInProgress)
+function workLoopConcurrent() {
+  while (workInProgress !== null && !shouldYield()) {
+    performUnitOfWork(workInProgress);
   }
 }
 ```
 
-结论：能开启设置时间分片的lane的api都是基于并发的api
+结论：能开启设置时间分片的 lane 的 api 都是基于并发的 api
 也不是所有的特性都要时间分片，只有部分需要：
-那就是如果这次schedule更新里包含了并发特性，就是用workLoopConcurrent，否则走workLoopSync
+那就是如果这次 schedule 更新里包含了并发特性，就是用 workLoopConcurrent，否则走 workLoopSync
 
 ```js
-var shouldTimeSlice = !includesBlockingLane(root,lanes) && !includesExpiredLane(root,lanes)
-var exitStatus = shouldTimeSlice ? workLoopConcurrent(root,lanes):workLoopSync(root,lanes)
+var shouldTimeSlice =
+  !includesBlockingLane(root, lanes) && !includesExpiredLane(root, lanes);
+var exitStatus = shouldTimeSlice
+  ? workLoopConcurrent(root, lanes)
+  : workLoopSync(root, lanes);
 ```
 
 useTransition useDeferredValue
 
 ```js
- const [isPending,startTransition] = useTransition()
+const [isPending, startTransition] = useTransition();
 ```
 
 列子标上不同的优先级
@@ -2395,34 +2397,34 @@ function App() {
 
 ### 总结
 
-react的渲染机制 render + commit，render实现vdom转fiber的reconcile，之后commit阶段执行增删改dom。更新ref，调用effect回调和生命周期函数。
-setState引起多次渲染，重要程度不同，优先级不同，react为了高优先级的更新先渲染，实现了并发模式。
-打断和恢复，实现shouldYield的时间分片机制
-react的lanes优先级机制，基于二进制设计。 调度任务时先把lanes转为事件优先级，然后转为scheduler的优先级。
-时间分片workloop+优先级调度，就是react的并发机制的实现原理
+react 的渲染机制 render + commit，render 实现 vdom 转 fiber 的 reconcile，之后 commit 阶段执行增删改 dom。更新 ref，调用 effect 回调和生命周期函数。
+setState 引起多次渲染，重要程度不同，优先级不同，react 为了高优先级的更新先渲染，实现了并发模式。
+打断和恢复，实现 shouldYield 的时间分片机制
+react 的 lanes 优先级机制，基于二进制设计。 调度任务时先把 lanes 转为事件优先级，然后转为 scheduler 的优先级。
+时间分片 workloop+优先级调度，就是 react 的并发机制的实现原理
 
-## 66.Ref的实现原理
+## 66.Ref 的实现原理
 
-ref的使用：
+ref 的使用：
 
-- 函数组件利用useRef保存Dom引用或者自定义的值，类组件里用createRef
-- forwardRef可以转发子组件的ref给父组件，还可以用useImperativeHandle来修改转发ref的值
+- 函数组件利用 useRef 保存 Dom 引用或者自定义的值，类组件里用 createRef
+- forwardRef 可以转发子组件的 ref 给父组件，还可以用 useImperativeHandle 来修改转发 ref 的值
 
 ### 总结
 
-render阶段处理原生标签也就是HostComponent类型的时候，如果有ref属性就给fiber.flags加一个标记
-commit阶段会在layout操作完dom后遍历fiber链表更新HostComponent的ref，也就是把fiber.stageNode赋值给ref.current.
-react不不关心ref上哪里创建的，createRef、useRef、普通对象，或者forwardRef传过来都行，只是把普通对象Object.seal了一下。
-forwardRef上单独创建了React Element类型，在beginWork处理到它的时候做了特殊处理，也就是把它的ref作为第二个参数传给函数组件，这就是ref转发的原理
-useImperativeHandle的底层实现就是useEffect，只不过执行的函数是它指定的，bind了传入的ref和create函数，这样在layout阶段调用hook的Effect函数的时候就可以更新ref了。
+render 阶段处理原生标签也就是 HostComponent 类型的时候，如果有 ref 属性就给 fiber.flags 加一个标记
+commit 阶段会在 layout 操作完 dom 后遍历 fiber 链表更新 HostComponent 的 ref，也就是把 fiber.stageNode 赋值给 ref.current.
+react 不不关心 ref 上哪里创建的，createRef、useRef、普通对象，或者 forwardRef 传过来都行，只是把普通对象 Object.seal 了一下。
+forwardRef 上单独创建了 React Element 类型，在 beginWork 处理到它的时候做了特殊处理，也就是把它的 ref 作为第二个参数传给函数组件，这就是 ref 转发的原理
+useImperativeHandle 的底层实现就是 useEffect，只不过执行的函数是它指定的，bind 了传入的 ref 和 create 函数，这样在 layout 阶段调用 hook 的 Effect 函数的时候就可以更新 ref 了。
 
-## 67.低代码编辑器：核心数据结构、全局store
+## 67.低代码编辑器：核心数据结构、全局 store
 
 左边是物料区，中间是画布区，右边是数据编辑区
 可以从物料区拖拽组件到中间的画布区，来可视化搭建页面
 画布区组件选中后，在属性编辑区修改属性：
-左边可以看到组件的大纲视图，用树展示组件嵌套结构，也可以直接看生成的json
-低代码编辑器的核心，就是json,拖拽不是低代码编辑器必须的。
+左边可以看到组件的大纲视图，用树展示组件嵌套结构，也可以直接看生成的 json
+低代码编辑器的核心，就是 json,拖拽不是低代码编辑器必须的。
 
 ```tsx
 npx create-vite lowcode-editor
@@ -2454,94 +2456,94 @@ export default App
 
 ```tsx
 import { Allotment } from "allotment";
-import 'allotment/dist/style.css';
+import "allotment/dist/style.css";
 
 export default function ReactPlayground() {
-    return <div className='h-[100vh] flex flex-col'>
-        <div className=''>
-           Header
-        </div>
-        <Allotment>
-            <Allotment.Pane preferredSize={240} maxSize={300} minSize={200}>
-                Materail
-            </Allotment.Pane>
-            <Allotment.Pane>
-                EditArea
-            </Allotment.Pane>
-            <Allotment.Pane preferredSize={300} maxSize={500} minSize={300}>
-                Setting
-            </Allotment.Pane>
-        </Allotment>
+  return (
+    <div className="h-[100vh] flex flex-col">
+      <div className="">Header</div>
+      <Allotment>
+        <Allotment.Pane preferredSize={240} maxSize={300} minSize={200}>
+          Materail
+        </Allotment.Pane>
+        <Allotment.Pane>EditArea</Allotment.Pane>
+        <Allotment.Pane preferredSize={300} maxSize={500} minSize={300}>
+          Setting
+        </Allotment.Pane>
+      </Allotment>
     </div>
+  );
 }
 ```
 
-写header的样式
+写 header 的样式
 
 ```tsx
-  <div className='h-[60px] flex items-center border-b-[1px] border-[#000]'>
-           Header
-  </div>
+<div className="h-[60px] flex items-center border-b-[1px] border-[#000]">
+  Header
+</div>
 ```
 
 替换具体的组件
 
 ```tsx
 import { Allotment } from "allotment";
-import 'allotment/dist/style.css';
+import "allotment/dist/style.css";
 import { Header } from "./components/Header";
 import { EditArea } from "./components/EditArea";
 import { Setting } from "./components/Setting";
 import { Material } from "./components/Material";
 
 export default function ReactPlayground() {
-    return <div className='h-[100vh] flex flex-col'>
-        <div className='h-[60px] flex items-center border-b-[1px] border-[#000]'>
-            <Header />
-        </div>
-        <Allotment>
-            <Allotment.Pane preferredSize={240} maxSize={300} minSize={200}>
-                <Material />
-            </Allotment.Pane>
-            <Allotment.Pane>
-                <EditArea />
-            </Allotment.Pane>
-            <Allotment.Pane preferredSize={300} maxSize={500} minSize={300}>
-                <Setting />
-            </Allotment.Pane>
-        </Allotment>
+  return (
+    <div className="h-[100vh] flex flex-col">
+      <div className="h-[60px] flex items-center border-b-[1px] border-[#000]">
+        <Header />
+      </div>
+      <Allotment>
+        <Allotment.Pane preferredSize={240} maxSize={300} minSize={200}>
+          <Material />
+        </Allotment.Pane>
+        <Allotment.Pane>
+          <EditArea />
+        </Allotment.Pane>
+        <Allotment.Pane preferredSize={300} maxSize={500} minSize={300}>
+          <Setting />
+        </Allotment.Pane>
+      </Allotment>
     </div>
+  );
 }
 ```
 
 分别写下几个组件
 
 ```tsx
-editor/components/Header.tsx
+editor / components / Header.tsx;
 
 export function Header() {
-    return <div>Header</div>
+  return <div>Header</div>;
 }
-editor/components/Material.tsx
+editor / components / Material.tsx;
 
 export function Material() {
-    return <div>Material</div>
+  return <div>Material</div>;
 }
-editor/components/EditArea.tsx
+editor / components / EditArea.tsx;
 
 export function EditArea() {
-    return <div>EditArea</div>
+  return <div>EditArea</div>;
 }
-editor/components/Setting.tsx
+editor / components / Setting.tsx;
 
 export function Setting() {
-    return <div>Setting</div>
+  return <div>Setting</div>;
 }
 ```
 
-全局数据使用zustand `npm install --save zustand`
+全局数据使用 zustand `npm install --save zustand`
 
-创建editor/stores/components.tsx 保存全局的那个组件json：
+创建 editor/stores/components.tsx 保存全局的那个组件 json：
 
 ```tsx
 import { create } from "zustand";
@@ -2638,9 +2640,451 @@ export function getComponentById(
   }
   return null;
 }
-
 ```
 
 ### 总结
 
-从物料区拖拽组件到画布，删除组件、在属性编辑区修改组件属性，都是对这个json对修改。
+从物料区拖拽组件到画布，删除组件、在属性编辑区修改组件属性，都是对这个 json 对修改。
+
+## 68.低代码编辑器：拖拽组件到画布，拖拽编辑 json
+
+创建物料区` src/editor/materials/Container``src/editor/materials/Button``src/editor/materials/Page `
+
+实现 name 对 component 对映射，以及注册新的 componentConfig
+
+```tsx
+// stores/componentsConfig
+import { create } from "zustand";
+import Page from "../materials/Page";
+import Container from "../materials/Container";
+import Button from "../materials/Button";
+export interface ComponentConfigs {
+  name: string;
+  defaultProps: any;
+  component: any;
+}
+export interface State {
+  componentConfig: Record<string, ComponentConfigs>;
+}
+export interface Action {
+  registerComponentConfig: (name: string, item: ComponentConfigs) => void;
+}
+export const useComponentConfigsStore = create<State & Action>((set) => ({
+  componentConfig: {
+    Page: {
+      name: "Page",
+      defaultProps: {},
+      component: Page,
+    },
+    Container: {
+      name: "Container",
+      defaultProps: {},
+      component: Container,
+    },
+    Button: {
+      name: "Button",
+      defaultProps: {
+        type: "primary",
+        text: "按钮",
+      },
+      component: Button,
+    },
+  },
+  registerComponentConfig: (name: string, item: ComponentConfigs) => {
+    set((state) => {
+      return {
+        ...state,
+        componentConfig: { ...state.componentConfig, [name]: item },
+      };
+    });
+  },
+}));
+```
+
+在 EditorArea 区域实现使用`useComponentConfig`,实现`renderComponent`进行渲染
+
+```tsx
+import { createElement, useEffect, type ReactNode } from "react";
+import { useComponentsStore, type Component } from "../stores/components";
+import { useComponentConfigsStore } from "../stores/componentsConfig";
+export function EditArea() {
+  const { components, addComponent } = useComponentsStore();
+  const { componentConfig } = useComponentConfigsStore();
+  useEffect(() => {
+    addComponent(
+      {
+        id: 222,
+        name: "Container",
+        props: {},
+        children: [],
+      },
+      1
+    );
+    addComponent(
+      {
+        id: 222,
+        name: "Button",
+        props: { text: "完美" },
+        children: [],
+      },
+      222
+    );
+  }, []);
+
+  function renderComponent(components: Component[]): ReactNode {
+    return components.map((item: Component) => {
+      const init = componentConfig[item.name];
+      if (!init) {
+        return null;
+      }
+      return createElement(
+        init.component,
+        { key: item.id, ...init.defaultProps, ...item.props },
+        item.children?.length ? renderComponent(item.children) : []
+      );
+    });
+  }
+
+  return <div>{renderComponent(components)}</div>;
+}
+```
+
+实现拖拽 `npm install react-dnd react-dnd-html5-backend`
+
+```tsx
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+createRoot(document.getElementById("root")!).render(
+  <DndProvider backend={HTML5Backend}>
+    <App />
+  </DndProvider>
+);
+```
+
+在要拖拽到组件添加 useDrag，在被放入到的地方使用 useDrop
+实现渲染左侧 material 物料区的组件
+
+```tsx
+import MaterialItem from "./MaterialItem";
+import { useComponentConfigsStore } from "../stores/componentsConfig";
+import { useMemo } from "react";
+export function Material() {
+  const { componentConfig } = useComponentConfigsStore();
+  const allItem = useMemo(() => {
+    return Object.values(componentConfig);
+  }, [componentConfig]);
+  return (
+    <div>
+      {allItem.map((item, index) => {
+        return (
+          <MaterialItem key={item.name + index} name={item.name}></MaterialItem>
+        );
+      })}
+    </div>
+  );
+}
+
+//MaterialItem
+interface MaterialItemProps {
+  name: string;
+}
+const MaterialItem = ({ name }: MaterialItemProps) => {
+  return (
+    <div className="border-dashed border-[1px] border-[#000] m-[10px] py-[8px] px-[10px] cursor-move inline-block bg-white hover:bg-[#ccc]">
+      {name}
+    </div>
+  );
+};
+export default MaterialItem;
+```
+
+实现拖拽
+
+```tsx
+const MaterialItem = ({ name }: MaterialItemProps) => {
+  const ref = useRef(null);
+  const [{ isDragging }, drag] = useDrag({
+    type: name,
+    collect(monitor) {
+      return {
+        isDragging: monitor.isDragging(),
+      };
+    },
+    item: {
+      type: name,
+    },
+  });
+  useEffect(() => {
+    drag(ref);
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className="border-dashed border-[1px] border-[#000] m-[10px] py-[8px] px-[10px] cursor-move inline-block bg-white hover:bg-[#ccc]"
+    >
+      {name}
+    </div>
+  );
+};
+
+const Page = ({ children }: PropsWithChildren) => {
+  const dropRef = useRef(null);
+  const [{ canDrop }, drop] = useDrop(() => ({
+    accept: ["Button", "Container"],
+    drop(item: { type: string }) {
+      console.log(item);
+      message.success(item.type);
+    },
+    collect(monitor) {
+      return {
+        canDrop: monitor.canDrop(),
+      };
+    },
+  }));
+  useEffect(() => {
+    drop(dropRef);
+  }, []);
+  return (
+    <div
+      ref={dropRef}
+      className="p-[20px] h-[100%] box-border"
+      style={{ border: canDrop ? "2px solid blue" : "none" }}
+    >
+      {children}
+    </div>
+  );
+};
+```
+
+实现拖拽后组件插入,并抽出 hook
+
+```tsx
+export function useMaterialDrop(accept: string[], id: number) {
+  const dropRef = useRef(null);
+  const { addComponent } = useComponentsStore();
+  const { componentConfig } = useComponentConfigsStore();
+  const [{ canDrop }, drop] = useDrop(() => ({
+    accept: accept,
+    drop(item: { type: string }, monitor) {
+      if (monitor.didDrop()) {
+        return;
+      }
+      const comp = componentConfig[item.type];
+      if (comp) {
+        addComponent(
+          {
+            id: new Date().getTime(),
+            props: comp.defaultProps,
+            name: item.type,
+          },
+          id
+        );
+      }
+    },
+    collect(monitor) {
+      return {
+        canDrop: monitor.canDrop(),
+      };
+    },
+  }));
+  useEffect(() => {
+    drop(dropRef);
+  }, []);
+  return { dropRef, canDrop };
+}
+```
+
+注意：drop 多个元素同时响应，需要添加
+
+```tsx
+const [{ canDrop }, drop] = useDrop(() => ({
+  accept: accept,
+  drop(item: { type: string }, monitor) {
+    if (monitor.didDrop()) {
+      return;
+    }
+  },
+  collect(monitor) {},
+}));
+```
+
+Setting 展示 json
+
+```tsx
+import { useComponentsStore } from "../stores/components";
+
+export function Setting() {
+  const { components } = useComponentsStore();
+
+  return (
+    <div>
+      <pre>{JSON.stringify(components, null, 2)}</pre>
+    </div>
+  );
+}
+```
+
+### 总结
+本节实现左侧物料区渲染各种div组件[Button,Container,Page]
+展示区需要根据component[],递归渲染组件，需要从map拿到对应的组件使用React.createElement
+Button和Container需实现useDrag
+Page和Container需实现useDrop可抽出hook
+保证drop只触发一次
+setting组件展示json结果
+
+## 69.低代码编辑器：画布区hover展示高亮框
+实现鼠标hover到画布区的任意组件，都会有高亮效果，选中组件有框选效果
+父元素监听鼠标事件，根据元素所在的width、height、left、top显示编辑框
+
+如果我们需要知道hover或者click的元素对应的component的id，渲染的时候加一下：
+```tsx
+<AntdButton data-component-id={id}></AntdButton>
+```
+在EditArea中实现mouseover相关的函数，取得上面绑定的componentId
+```tsx
+  const [overId, setOverId] = useState<number>();
+  const handleOver: MouseEventHandler = (e) => {
+    const path = e.nativeEvent.composedPath();
+    for (let i of path) {
+      const comId = (i as HTMLElement).dataset.componentId;
+      if (comId) {
+        setOverId(+comId);
+        return;
+      }
+    }
+  };
+```
+有个container，和目标node，计算要套的框的width，height，left，top
+
+实现一个HoverMask的组件，是在`edit-area`的子组件。HoverMask根据`edit-area`和`componentId node`的top left 进行计算高亮层（absolute），
+实现文本label的div，和高亮层是silbing。
+高亮层需要找的div【class = ‘protal-wrapper’】挂着。`protal-wrapper`上`edit-area`的自组件。
+```tsx
+   {overId && (
+        <HoverMask
+          containerClassName="edit-area"
+          protalWrapperClassName='protal-wrapper'
+          componentId={overId}
+        ></HoverMask>
+      )}
+
+ // HoverMask
+ import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { getComponentById, useComponentsStore } from "../../stores/components";
+
+export interface HoverMaskProps {
+  containerClassName: string;
+  componentId: number;
+  protalWrapperClassName: string;
+}
+export interface PositionState {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  labelLeft: number;
+  labelTop: number;
+}
+export function HoverMask(props: HoverMaskProps) {
+  const { components } = useComponentsStore();
+  const { containerClassName, componentId, protalWrapperClassName } = props;
+  const [position, setPosition] = useState({
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
+    labelLeft: 0,
+    labelTop: 0,
+  });
+
+  function updatePosition() {
+    if (!componentId) {
+      return;
+    }
+    const container = document.querySelector(`.${containerClassName}`);
+    if (!container) {
+      return;
+    }
+    const node = document.querySelector(`[data-component-id="${componentId}"]`);
+    if (!node) {
+      return;
+    }
+    const { top, left } = container.getBoundingClientRect();
+    const {
+      top: nodeTop,
+      left: nodeLeft,
+      width: nodeWidth,
+      height: nodeHeight,
+    } = node.getBoundingClientRect();
+    console.log(nodeWidth);
+    let labelTop = nodeTop - top + container!.scrollTop;
+    let labelLeft = nodeLeft - left + nodeWidth;
+    if (labelTop <= 0) {
+      labelTop -= -20;
+    }
+    setPosition({
+      top: nodeTop - top + container!.scrollTop,
+      left: nodeLeft - left + container!.scrollLeft,
+      width: nodeWidth,
+      height: nodeHeight,
+      labelTop: labelTop,
+      labelLeft: labelLeft,
+    });
+  }
+  useEffect(() => {
+    updatePosition();
+  }, [componentId]);
+  const el = useMemo(() => {
+    return document.querySelector(`.${protalWrapperClassName}`)!;
+  }, []);
+  const curComponent = useMemo(() => {
+    return getComponentById(componentId, components);
+  }, [componentId]);
+  return createPortal(
+    <>
+      <div
+        style={{
+          position: "absolute",
+          left: position.left,
+          top: position.top,
+          backgroundColor: "rgba(0, 0, 255, 0.05)",
+          border: "1px dashed blue",
+          pointerEvents: "none",
+          width: position.width,
+          height: position.height,
+          zIndex: 12,
+          borderRadius: 4,
+          boxSizing: "border-box",
+        }}
+      ></div>
+      <div
+        style={{
+          position: "absolute",
+          left: position.labelLeft,
+          top: position.labelTop,
+          fontSize: "14px",
+          zIndex: 13,
+          display: !position.width || position.width < 10 ? "none" : "inline",
+          transform: "translate(-100%, -100%)",
+        }}
+      >
+        <div
+          style={{
+            padding: "0 8px",
+            backgroundColor: "blue",
+            borderRadius: 4,
+            color: "#fff",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {curComponent?.name}
+        </div>
+      </div>
+    </>,
+    el
+  );
+}
+     
+```
