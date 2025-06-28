@@ -8,11 +8,14 @@ import {
 import { useComponentsStore, type Component } from "../stores/components";
 import { useComponentConfigsStore } from "../stores/componentsConfig";
 import { HoverMask } from "./HoverMask";
+import { SelectedMask } from "./SelectedMask";
 export function EditArea() {
-  const { components, addComponent } = useComponentsStore();
+  const { components, addComponent, curComponentId, setCurComponent } =
+    useComponentsStore();
   const { componentConfig } = useComponentConfigsStore();
   console.log(components);
   const [overId, setOverId] = useState<number>();
+  
   const handleOver: MouseEventHandler = (e) => {
     const path = e.nativeEvent.composedPath();
     for (let i of path) {
@@ -25,6 +28,16 @@ export function EditArea() {
   };
   const hanldeLeave: MouseEventHandler = (e) => {
     setOverId(undefined);
+  };
+  const handleClick: MouseEventHandler = (e) => {
+    const path = e.nativeEvent.composedPath();
+    for (let i of path) {
+      const compId = (i as HTMLElement).dataset?.componentId;
+      if (compId) {
+        setCurComponent(+compId);
+        return;
+      }
+    }
   };
   function renderComponent(components: Component[]): ReactNode {
     return components.map((item: Component) => {
@@ -51,13 +64,21 @@ export function EditArea() {
       className="h-[100%] edit-area"
       onMouseOver={handleOver}
       onMouseLeave={hanldeLeave}
+      onClick={handleClick}
     >
-      {overId && (
+      {overId && overId !== curComponentId && (
         <HoverMask
           containerClassName="edit-area"
-          protalWrapperClassName='protal-wrapper'
+          protalWrapperClassName="protal-wrapper"
           componentId={overId}
         ></HoverMask>
+      )}
+      {curComponentId && curComponentId != 1 && (
+        <SelectedMask
+          containerClassName="edit-area"
+          protalWrapperClassName="protal-wrapper"
+          componentId={curComponentId}
+        ></SelectedMask>
       )}
       {renderComponent(components)}
       <div className="protal-wrapper"></div>

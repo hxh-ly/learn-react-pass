@@ -3086,5 +3086,188 @@ export function HoverMask(props: HoverMaskProps) {
     el
   );
 }
-     
 ```
+
+## 70.低代码编辑区：画布区click展示编辑框
+记录当前的选中的组件
+```tsx
+interface State {
+  components: Component[];
+  curComponentId?: number | null;
+  curComponent: Component | null;
+}
+
+interface Action {
+  addComponent: (component: Component, parentId?: number) => void;
+  deleteComponent: (componentId: number) => void;
+  updateComponentProps: (componentId: number, props: any) => void;
+  setCurComponentId: (componentId: number | null) => void;
+}
+curComponentId: null,
+curComponent: null,
+setCurComponentId: (componentId) =>
+  set((state) => ({
+    curComponentId: componentId,
+    curComponent: getComponentById(componentId, state.components),
+  }))
+```
+editArea绑定click
+```tsx
+ const handleClick: MouseEventHandler = (e) => {
+    const path = e.nativeEvent.composedPath();
+    for (let i of path) {
+      const compId = (i as HTMLElement).dataset?.componentId;
+      if (compId) {
+        setCurComponent(+compId);
+        return;
+      }
+    }
+  };
+```
+实现这个SelectedMask,和HoverMask类似，只是多了删除handleDelete部分。并且当overId和curComponentId一致，不展示高亮框。Page根组件不展示删除按钮
+```tsx
+  return createPortal(
+    <>
+      <div
+        style={{
+          position: "absolute",
+          left: position.left,
+          top: position.top,
+          backgroundColor: "rgba(0, 0, 255, 0.05)",
+          border: "1px dashed blue",
+          pointerEvents: "none",
+          width: position.width,
+          height: position.height,
+          zIndex: 12,
+          borderRadius: 4,
+          boxSizing: "border-box",
+        }}
+      ></div>
+      <div
+        style={{
+          position: "absolute",
+          left: position.labelLeft,
+          top: position.labelTop,
+          fontSize: "14px",
+          zIndex: 13,
+          display: !position.width || position.width < 10 ? "none" : "inline",
+          transform: "translate(-100%, -100%)",
+        }}
+      >
+        <Space>
+          <div
+            style={{
+              padding: "0 8px",
+              backgroundColor: "blue",
+              borderRadius: 4,
+              color: "#fff",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {curComponent?.name}
+          </div>
+          {componentId !== 1 && (
+            <div style={{ padding: "0 8px", backgroundColor: "blue" }}>
+              <Popconfirm
+                title="确认删除？"
+                okText="确认"
+                cancelText="取消"
+                onConfirm={handleDelete}
+              >
+                <DeleteOutlined style={{ color: '#fff' }}></DeleteOutlined>
+              </Popconfirm>
+            </div>
+          )}
+        </Space>
+      </div>
+    </>,
+    el
+  );
+```
+amis的编辑器还有这个功能：组件[下拉框]会展示它的所有父组件，点击就会选中该父组件
+```tsx
+  const parentComponents = useMemo(() => {
+    const parentComponents = [];
+    let component = curComponent;
+
+    while (component?.parentId) {
+      component = getComponentById(component.parentId, components)!;
+      parentComponents.push(component);
+    }
+
+    return parentComponents;
+  }, [curComponent]);
+  return createPortal(
+    <>
+      <div
+        style={{
+          position: "absolute",
+          left: position.labelLeft,
+          top: position.labelTop,
+          fontSize: "14px",
+          zIndex: 13,
+          display: !position.width || position.width < 10 ? "none" : "inline",
+          transform: "translate(-100%, -100%)",
+        }}
+      >
+        <Space>
+          <Dropdown
+            menu={{
+              items: parentComponents.map((v) => {
+                return {
+                  key: v?.id + "",
+                  label: v?.name,
+                };
+              }),
+              onClick: ({ key }) => {
+                setCurComponent(+key);
+              },
+            }}
+            disabled={parentComponents.length === 0}
+          >
+            <div
+              style={{
+                padding: "0 8px",
+                backgroundColor: "blue",
+                borderRadius: 4,
+                color: "#fff",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {curComponent?.name}
+            </div>
+          </Dropdown>
+        </Space>
+      </div>
+    </>,
+    el
+  );
+```
+展示修改成desc，而不是组件名
+```tsx
+Interface Component {
+
+}
+// MaterialItem|HoverMask|SelectedMask|drop方法
+```
+窗口调整重新计算
+```tsx
+  useEffect(() => {
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, []);
+```
+
+### 总结
+这节我们实现点击时的编辑框
+在store保存curComponent
+EditArea的click事件进行设置id，和component
+渲染SelectedMask
+SelectedMask展示dropDown、调用deleteComponent
+渲染SelectedMask要隐藏HoverMask
+window.resize时要updateComponent
+此外还把Component.name替换成Component.desc

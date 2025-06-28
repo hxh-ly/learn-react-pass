@@ -1,10 +1,13 @@
 import { useEffect, useRef } from "react";
 import { useDrag } from "react-dnd";
+import type { CommonComponentProps } from "../../interface";
+import { useComponentConfigsStore } from "../../stores/componentsConfig";
 
 interface MaterialItemProps {
   name: string;
 }
-const MaterialItem = ({ name }: MaterialItemProps) => {
+const MaterialItem = ({ name }: CommonComponentProps) => {
+  const { componentConfig } = useComponentConfigsStore();
   const ref = useRef(null);
   const [{ isDragging }, drag] = useDrag({
     type: name,
@@ -13,9 +16,9 @@ const MaterialItem = ({ name }: MaterialItemProps) => {
         isDragging: monitor.isDragging(),
       };
     },
-    item:{
-        type:name
-    }
+    item: {
+      type: name,
+    },
   });
   useEffect(() => {
     drag(ref);
@@ -25,7 +28,7 @@ const MaterialItem = ({ name }: MaterialItemProps) => {
       ref={ref}
       className="border-dashed border-[1px] border-[#000] m-[10px] py-[8px] px-[10px] cursor-move inline-block bg-white hover:bg-[#ccc]"
     >
-      {name}
+      {componentConfig[name].desc}
     </div>
   );
 };

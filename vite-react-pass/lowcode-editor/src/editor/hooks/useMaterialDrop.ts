@@ -20,6 +20,7 @@ export function useMaterialDrop(accept: string[], id: number) {
             id: new Date().getTime(),
             props: comp.defaultProps,
             name: item.type,
+            desc:comp.desc
           },
           id
         );

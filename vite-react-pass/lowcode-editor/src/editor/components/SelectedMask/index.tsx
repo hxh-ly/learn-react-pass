@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { getComponentById, useComponentsStore } from "../../stores/components";
-
-export interface HoverMaskProps {
+import { Dropdown, Popconfirm, Space } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
+export interface SelectedMaskProps {
   containerClassName: string;
   componentId: number;
   protalWrapperClassName: string;
@@ -15,8 +16,8 @@ export interface PositionState {
   labelLeft: number;
   labelTop: number;
 }
-export function HoverMask(props: HoverMaskProps) {
-  const { components } = useComponentsStore();
+export function SelectedMask(props: SelectedMaskProps) {
+  const { components, deleteComponent, setCurComponent } = useComponentsStore();
   const { containerClassName, componentId, protalWrapperClassName } = props;
   const [position, setPosition] = useState({
     left: 0,
@@ -61,6 +62,10 @@ export function HoverMask(props: HoverMaskProps) {
       labelLeft: labelLeft,
     });
   }
+  function handleDelete() {
+    deleteComponent(componentId);
+    setCurComponent(null);
+  }
   useEffect(() => {
     updatePosition();
   }, [componentId]);
@@ -72,7 +77,24 @@ export function HoverMask(props: HoverMaskProps) {
   }, [componentId]);
   useEffect(() => {
     updatePosition();
-}, [components]);
+  }, [components]);
+  useEffect(() => {
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, []);
+  const parentComponents = useMemo(() => {
+    const parentComponents = [];
+    let component = curComponent;
+
+    while (component?.parentId) {
+      component = getComponentById(component.parentId, components)!;
+      parentComponents.push(component);
+    }
+
+    return parentComponents;
+  }, [curComponent]);
   return createPortal(
     <>
       <div
@@ -101,18 +123,47 @@ export function HoverMask(props: HoverMaskProps) {
           transform: "translate(-100%, -100%)",
         }}
       >
-        <div
-          style={{
-            padding: "0 8px",
-            backgroundColor: "blue",
-            borderRadius: 4,
-            color: "#fff",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {curComponent?.desc}
-        </div>
+        <Space>
+          <Dropdown
+            menu={{
+              items: parentComponents.map((v) => {
+                return {
+                  key: v?.id + "",
+                  label: v?.desc,
+                };
+              }),
+              onClick: ({ key }) => {
+                setCurComponent(+key);
+              },
+            }}
+            disabled={parentComponents.length === 0}
+          >
+            <div
+              style={{
+                padding: "0 8px",
+                backgroundColor: "blue",
+                borderRadius: 4,
+                color: "#fff",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {curComponent?.desc}
+            </div>
+          </Dropdown>
+          {componentId !== 1 && (
+            <div style={{ padding: "0 8px", backgroundColor: "blue" }}>
+              <Popconfirm
+                title="确认删除？"
+                okText="确认"
+                cancelText="取消"
+                onConfirm={handleDelete}
+              >
+                <DeleteOutlined style={{ color: "#fff" }}></DeleteOutlined>
+              </Popconfirm>
+            </div>
+          )}
+        </Space>
       </div>
     </>,
     el

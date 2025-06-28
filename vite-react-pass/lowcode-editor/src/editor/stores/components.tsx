@@ -5,15 +5,19 @@ export interface Component {
   props: any;
   children?: Component[];
   parentId?: number;
+  desc?:string;
 }
 
 interface State {
   components: Component[];
+  curComponentId?: number | null;
+  curComponent?: Component | null;
 }
 interface Action {
   addComponent: (item: Component, parentId?: number) => void;
   deleteComponent: (id: number) => void;
   updateComponentProps: (id: number, props: any) => void;
+  setCurComponent: (id: number|null) => void;
 }
 
 export const useComponentsStore = create<State & Action>((set, get) => {
@@ -26,17 +30,19 @@ export const useComponentsStore = create<State & Action>((set, get) => {
         desc: "页面",
       },
     ],
+    curComponent: null,
+    curComponentId: null,
     addComponent: (item: Component, parentId?: number) => {
       set((state) => {
-        console.log({parentId})
-        if (parentId!=undefined) {
+        console.log({ parentId });
+        if (parentId != undefined) {
           let comp = getComponentById(parentId, state.components);
           if (comp) {
             if (comp.children) {
-                console.log('bbb')
+              console.log("bbb");
               comp.children.push(item);
             } else {
-                console.log('aaa')
+              console.log("aaa");
               comp.children = [item];
             }
           }
@@ -70,6 +76,14 @@ export const useComponentsStore = create<State & Action>((set, get) => {
       set((state) => {
         comp.props = { ...comp.props, ...props };
         return { components: [...state.components] };
+      });
+    },
+    setCurComponent: (id: number) => {
+      set((state) => {
+        return {
+          curComponentId: id,
+          curComponent: getComponentById(id, state.components),
+        };
       });
     },
   };
