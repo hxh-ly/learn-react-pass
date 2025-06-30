@@ -28,7 +28,7 @@ const MaterialItem = ({ name }: CommonComponentProps) => {
       ref={ref}
       className="border-dashed border-[1px] border-[#000] m-[10px] py-[8px] px-[10px] cursor-move inline-block bg-white hover:bg-[#ccc]"
     >
-      {componentConfig[name].desc}
+    {componentConfig[name].desc}
     </div>
   );
 };

@@ -10,7 +10,7 @@ import { useComponentConfigsStore } from "../stores/componentsConfig";
 import { HoverMask } from "./HoverMask";
 import { SelectedMask } from "./SelectedMask";
 export function EditArea() {
-  const { components, addComponent, curComponentId, setCurComponent } =
+  const { components, addComponent, curComponentId, setCurComponent, mode } =
     useComponentsStore();
   const { componentConfig } = useComponentConfigsStore();
   console.log(components);
@@ -40,13 +40,16 @@ export function EditArea() {
     }
   };
   function renderComponent(components: Component[]): ReactNode {
+    if (mode !== "edit") {
+      return;
+    }
     return components.map((item: Component) => {
       const init = componentConfig[item.name];
       if (!init) {
         return null;
       }
       return createElement(
-        init.component,
+        init.dev,
         {
           key: item.id,
           id: item.id,

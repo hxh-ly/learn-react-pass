@@ -18,7 +18,7 @@ export function Setting() {
         block
         options={["属性", "样式", "事件"]}
       ></Segmented>
-      <div>
+      <div className="pt-[20px] h-[calc(100vh-60px-30px-20px)]">
         {key==='属性'&& <ComponentAttr/> }
         {key==='样式'&& <ComponentStyle/>}
         {key==='事件'&& <ComponentEvent/>}

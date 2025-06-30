@@ -3478,3 +3478,51 @@ Setting区域渲染对应的表单
 表单变化修改对应的style，通过props传给对应的Container
 样式编辑支持书写css，要实现style-to-object。 去除类，去除注释，转大驼峰
 当然，现在setter的表单配置不够完善，当后面新加组件的时候，需要什么表单类型在扩展就行
+
+## 72.低代码编辑器：预览、大纲
+先实现左侧的大纲和源码
+![大纲和源码](./readmeImg/72_preview_outline.png)
+components/Material/Wrapper/index.tsx
+```tsx
+
+```
+实现大纲，树形展示组件树
+components/Outline/index.tsx
+
+
+使用编辑器展示json
+components/Source/index.tsx
+
+
+实现预览功能，每个组件都要区分编辑和预览两种状态，甚至渲染的内容都不相同。最好分开写
+每个组件添加`dev` `prod` 每个组件实现dev和prod.tsx 
+
+prod.tsx和dev的区别
+- 不用带data-component-id
+- 不用带border，不用带drop事件
+- Page不用带 h-[100%]
+
+在componentConfig注册下
+在EditArea的render改下，非dev不渲染
++一个Preview组件，只需要实现将json递归渲染成prod组件就行。
+store+一个mode来切换编辑和渲染状态
+```ts
+interface State {
+  mode:'edit'|'preview'
+}
+interface Action {
+  setMode:(mode:State['mode']=>void)
+}
+```
+LowcodeEditor根据不同的mode去切换渲染
+
+Header加一个按钮切换mode
+```tsx
+
+```
+
+### 总结
+实现大纲，源码、预览功能
+大纲需要tree组件展示
+源码通过编辑器展示json
+添加mode状态切换预览和编辑

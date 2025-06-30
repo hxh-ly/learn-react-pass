@@ -7,9 +7,8 @@ export interface ButtonProps {
   text: string;
 }
 const Button = ({ type, id, styles, text }: CommonComponentProps) => {
-  console.log('btn',styles)
   return (
-    <AntdButton data-component-id={id} type={type} style={styles}>
+    <AntdButton  type={type} style={styles}>
       {text}
     </AntdButton>
   );
