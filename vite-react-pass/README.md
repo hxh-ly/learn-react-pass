@@ -3526,3 +3526,17 @@ Header加一个按钮切换mode
 大纲需要tree组件展示
 源码通过编辑器展示json
 添加mode状态切换预览和编辑
+
+## 73.低代码编辑器：事件绑定
+选中组件，在事件面版会列出可绑定的事件
+选中某个事件，可以添加动作
+
+不同组件可绑定的事件是不同的，实现config添加事件属性,给button绑定2个事件
+实现ComponentEvent组件，使用collapse
+实现给Component的props绑定上事件,提供两种类型goToLink和showMessage,如果是goToLink的提供url输入
+实现给preview绑定事件，实际就是修改component的props属性，在button注入props
+动作后面会越来越多，抽离成组件 /Setting/action/GoToLink
+实现另一个动作，ShowMessage, 实现select【config.type】+ input【config.text】,ComponentEvent要添加showMessage的组件。在preview运行时在click动作实现
+
+### 总结
+这节我们实现了事件绑定，需要在compoenntConfig进行配置，在setting面板展示配置的可用事件，事件有不同的动作。在表单设置的时候进行props的赋值，在Preview的时候进行事件的绑定

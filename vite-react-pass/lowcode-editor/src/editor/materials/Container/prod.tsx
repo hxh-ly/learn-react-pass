@@ -4,12 +4,15 @@ import { useComponentConfigsStore } from "../../stores/componentsConfig";
 import { useDrop } from "react-dnd";
 import type { CommonComponentProps } from "../../interface";
 import { useMaterialDrop } from "../../hooks/useMaterialDrop";
-const Container = ({ id, name, children,styles }: CommonComponentProps) => {
+const Container = ({
+  id,
+  name,
+  children,
+  styles,
+  ...props
+}: CommonComponentProps) => {
   return (
-    <div
-      style={styles}
-      className={`min-h-[100px] p-[20px] `}
-    >
+    <div style={styles} className={`min-h-[100px] p-[20px] `} {...props}>
       {children}
     </div>
   );

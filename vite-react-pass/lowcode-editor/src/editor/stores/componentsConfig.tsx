@@ -11,6 +11,10 @@ export interface ComponentSetter {
   name: string;
   [key: string]: any;
 }
+export interface ComponentEvent {
+  label: string;
+  name: string;
+}
 export interface ComponentConfigs {
   name: string;
   defaultProps: any;
@@ -18,6 +22,7 @@ export interface ComponentConfigs {
   desc: string;
   setter?: ComponentSetter[];
   stylesSetter?: ComponentSetter[];
+  events?: ComponentEvent[];
   dev: any;
   prod: any;
 }
@@ -91,6 +96,16 @@ export const useComponentConfigsStore = create<State & Action>((set) => ({
           label: "高度",
         },
       ],
+      events:[
+        {
+          label:'单击事件',
+          name:'onClick'
+        },
+         {
+          label:'双击事件',
+          name:'onDoubleClick'
+        }
+      ]
     },
   },
   registerComponentConfig: (name: string, item: ComponentConfigs) => {
