@@ -23,8 +23,8 @@ flex 的格子
 2.逻辑
 
 - 日期属性，支持往前切换月份，支持往后切换月份
-- 改变日期
 - 增加 2 个参数 defaultValue 和 onChange
+- 改变日期
 - 提供 ref 来暴露 calendar 的 api
 - 添加两种模式的支持，使用 ahook
 
@@ -2925,51 +2925,60 @@ export function Setting() {
 ```
 
 ### 总结
-本节实现左侧物料区渲染各种div组件[Button,Container,Page]
-展示区需要根据component[],递归渲染组件，需要从map拿到对应的组件使用React.createElement
-Button和Container需实现useDrag
-Page和Container需实现useDrop可抽出hook
-保证drop只触发一次
-setting组件展示json结果
 
-## 69.低代码编辑器：画布区hover展示高亮框
-实现鼠标hover到画布区的任意组件，都会有高亮效果，选中组件有框选效果
-父元素监听鼠标事件，根据元素所在的width、height、left、top显示编辑框
+本节实现左侧物料区渲染各种 div 组件[Button,Container,Page]
+展示区需要根据 component[],递归渲染组件，需要从 map 拿到对应的组件使用 React.createElement
+Button 和 Container 需实现 useDrag
+Page 和 Container 需实现 useDrop 可抽出 hook
+保证 drop 只触发一次
+setting 组件展示 json 结果
 
-如果我们需要知道hover或者click的元素对应的component的id，渲染的时候加一下：
+## 69.低代码编辑器：画布区 hover 展示高亮框
+
+实现鼠标 hover 到画布区的任意组件，都会有高亮效果，选中组件有框选效果
+父元素监听鼠标事件，根据元素所在的 width、height、left、top 显示编辑框
+
+如果我们需要知道 hover 或者 click 的元素对应的 component 的 id，渲染的时候加一下：
+
 ```tsx
 <AntdButton data-component-id={id}></AntdButton>
 ```
-在EditArea中实现mouseover相关的函数，取得上面绑定的componentId
+
+在 EditArea 中实现 mouseover 相关的函数，取得上面绑定的 componentId
+
 ```tsx
-  const [overId, setOverId] = useState<number>();
-  const handleOver: MouseEventHandler = (e) => {
-    const path = e.nativeEvent.composedPath();
-    for (let i of path) {
-      const comId = (i as HTMLElement).dataset.componentId;
-      if (comId) {
-        setOverId(+comId);
-        return;
-      }
+const [overId, setOverId] = useState<number>();
+const handleOver: MouseEventHandler = (e) => {
+  const path = e.nativeEvent.composedPath();
+  for (let i of path) {
+    const comId = (i as HTMLElement).dataset.componentId;
+    if (comId) {
+      setOverId(+comId);
+      return;
     }
-  };
+  }
+};
 ```
-有个container，和目标node，计算要套的框的width，height，left，top
 
-实现一个HoverMask的组件，是在`edit-area`的子组件。HoverMask根据`edit-area`和`componentId node`的top left 进行计算高亮层（absolute），
-实现文本label的div，和高亮层是silbing。
-高亮层需要找的div【class = ‘protal-wrapper’】挂着。`protal-wrapper`上`edit-area`的自组件。
+有个 container，和目标 node，计算要套的框的 width，height，left，top
+
+实现一个 HoverMask 的组件，是在`edit-area`的子组件。HoverMask 根据`edit-area`和`componentId node`的 top left 进行计算高亮层（absolute），
+实现文本 label 的 div，和高亮层是 silbing。
+高亮层需要找的 div【class = ‘protal-wrapper’】挂着。`protal-wrapper`上`edit-area`的自组件。
+
 ```tsx
-   {overId && (
-        <HoverMask
-          containerClassName="edit-area"
-          protalWrapperClassName='protal-wrapper'
-          componentId={overId}
-        ></HoverMask>
-      )}
+{
+  overId && (
+    <HoverMask
+      containerClassName="edit-area"
+      protalWrapperClassName="protal-wrapper"
+      componentId={overId}
+    ></HoverMask>
+  );
+}
 
- // HoverMask
- import { useEffect, useMemo, useState } from "react";
+// HoverMask
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { getComponentById, useComponentsStore } from "../../stores/components";
 
@@ -3088,8 +3097,10 @@ export function HoverMask(props: HoverMaskProps) {
 }
 ```
 
-## 70.低代码编辑区：画布区click展示编辑框
+## 70.低代码编辑区：画布区 click 展示编辑框
+
 记录当前的选中的组件
+
 ```tsx
 interface State {
   components: Component[];
@@ -3111,50 +3122,127 @@ setCurComponentId: (componentId) =>
     curComponent: getComponentById(componentId, state.components),
   }))
 ```
-editArea绑定click
+
+editArea 绑定 click
+
 ```tsx
- const handleClick: MouseEventHandler = (e) => {
-    const path = e.nativeEvent.composedPath();
-    for (let i of path) {
-      const compId = (i as HTMLElement).dataset?.componentId;
-      if (compId) {
-        setCurComponent(+compId);
-        return;
-      }
+const handleClick: MouseEventHandler = (e) => {
+  const path = e.nativeEvent.composedPath();
+  for (let i of path) {
+    const compId = (i as HTMLElement).dataset?.componentId;
+    if (compId) {
+      setCurComponent(+compId);
+      return;
     }
-  };
+  }
+};
 ```
-实现这个SelectedMask,和HoverMask类似，只是多了删除handleDelete部分。并且当overId和curComponentId一致，不展示高亮框。Page根组件不展示删除按钮
+
+实现这个 SelectedMask,和 HoverMask 类似，只是多了删除 handleDelete 部分。并且当 overId 和 curComponentId 一致，不展示高亮框。Page 根组件不展示删除按钮
+
 ```tsx
-  return createPortal(
-    <>
-      <div
-        style={{
-          position: "absolute",
-          left: position.left,
-          top: position.top,
-          backgroundColor: "rgba(0, 0, 255, 0.05)",
-          border: "1px dashed blue",
-          pointerEvents: "none",
-          width: position.width,
-          height: position.height,
-          zIndex: 12,
-          borderRadius: 4,
-          boxSizing: "border-box",
-        }}
-      ></div>
-      <div
-        style={{
-          position: "absolute",
-          left: position.labelLeft,
-          top: position.labelTop,
-          fontSize: "14px",
-          zIndex: 13,
-          display: !position.width || position.width < 10 ? "none" : "inline",
-          transform: "translate(-100%, -100%)",
-        }}
-      >
-        <Space>
+return createPortal(
+  <>
+    <div
+      style={{
+        position: "absolute",
+        left: position.left,
+        top: position.top,
+        backgroundColor: "rgba(0, 0, 255, 0.05)",
+        border: "1px dashed blue",
+        pointerEvents: "none",
+        width: position.width,
+        height: position.height,
+        zIndex: 12,
+        borderRadius: 4,
+        boxSizing: "border-box",
+      }}
+    ></div>
+    <div
+      style={{
+        position: "absolute",
+        left: position.labelLeft,
+        top: position.labelTop,
+        fontSize: "14px",
+        zIndex: 13,
+        display: !position.width || position.width < 10 ? "none" : "inline",
+        transform: "translate(-100%, -100%)",
+      }}
+    >
+      <Space>
+        <div
+          style={{
+            padding: "0 8px",
+            backgroundColor: "blue",
+            borderRadius: 4,
+            color: "#fff",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {curComponent?.name}
+        </div>
+        {componentId !== 1 && (
+          <div style={{ padding: "0 8px", backgroundColor: "blue" }}>
+            <Popconfirm
+              title="确认删除？"
+              okText="确认"
+              cancelText="取消"
+              onConfirm={handleDelete}
+            >
+              <DeleteOutlined style={{ color: "#fff" }}></DeleteOutlined>
+            </Popconfirm>
+          </div>
+        )}
+      </Space>
+    </div>
+  </>,
+  el
+);
+```
+
+amis 的编辑器还有这个功能：组件[下拉框]会展示它的所有父组件，点击就会选中该父组件
+
+```tsx
+const parentComponents = useMemo(() => {
+  const parentComponents = [];
+  let component = curComponent;
+
+  while (component?.parentId) {
+    component = getComponentById(component.parentId, components)!;
+    parentComponents.push(component);
+  }
+
+  return parentComponents;
+}, [curComponent]);
+return createPortal(
+  <>
+    <div
+      style={{
+        position: "absolute",
+        left: position.labelLeft,
+        top: position.labelTop,
+        fontSize: "14px",
+        zIndex: 13,
+        display: !position.width || position.width < 10 ? "none" : "inline",
+        transform: "translate(-100%, -100%)",
+      }}
+    >
+      <Space>
+        <Dropdown
+          menu={{
+            items: parentComponents.map((v) => {
+              return {
+                key: v?.id + "",
+                label: v?.name,
+              };
+            }),
+            onClick: ({ key }) => {
+              setCurComponent(+key);
+            },
+          }}
+          disabled={parentComponents.length === 0}
+        >
           <div
             style={{
               padding: "0 8px",
@@ -3167,107 +3255,226 @@ editArea绑定click
           >
             {curComponent?.name}
           </div>
-          {componentId !== 1 && (
-            <div style={{ padding: "0 8px", backgroundColor: "blue" }}>
-              <Popconfirm
-                title="确认删除？"
-                okText="确认"
-                cancelText="取消"
-                onConfirm={handleDelete}
-              >
-                <DeleteOutlined style={{ color: '#fff' }}></DeleteOutlined>
-              </Popconfirm>
-            </div>
-          )}
-        </Space>
-      </div>
-    </>,
-    el
-  );
+        </Dropdown>
+      </Space>
+    </div>
+  </>,
+  el
+);
 ```
-amis的编辑器还有这个功能：组件[下拉框]会展示它的所有父组件，点击就会选中该父组件
-```tsx
-  const parentComponents = useMemo(() => {
-    const parentComponents = [];
-    let component = curComponent;
 
-    while (component?.parentId) {
-      component = getComponentById(component.parentId, components)!;
-      parentComponents.push(component);
-    }
+展示修改成 desc，而不是组件名
 
-    return parentComponents;
-  }, [curComponent]);
-  return createPortal(
-    <>
-      <div
-        style={{
-          position: "absolute",
-          left: position.labelLeft,
-          top: position.labelTop,
-          fontSize: "14px",
-          zIndex: 13,
-          display: !position.width || position.width < 10 ? "none" : "inline",
-          transform: "translate(-100%, -100%)",
-        }}
-      >
-        <Space>
-          <Dropdown
-            menu={{
-              items: parentComponents.map((v) => {
-                return {
-                  key: v?.id + "",
-                  label: v?.name,
-                };
-              }),
-              onClick: ({ key }) => {
-                setCurComponent(+key);
-              },
-            }}
-            disabled={parentComponents.length === 0}
-          >
-            <div
-              style={{
-                padding: "0 8px",
-                backgroundColor: "blue",
-                borderRadius: 4,
-                color: "#fff",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {curComponent?.name}
-            </div>
-          </Dropdown>
-        </Space>
-      </div>
-    </>,
-    el
-  );
-```
-展示修改成desc，而不是组件名
 ```tsx
 Interface Component {
 
 }
 // MaterialItem|HoverMask|SelectedMask|drop方法
 ```
+
 窗口调整重新计算
+
 ```tsx
-  useEffect(() => {
-    window.addEventListener("resize", updatePosition);
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-    };
-  }, []);
+useEffect(() => {
+  window.addEventListener("resize", updatePosition);
+  return () => {
+    window.removeEventListener("resize", updatePosition);
+  };
+}, []);
 ```
 
 ### 总结
+
 这节我们实现点击时的编辑框
-在store保存curComponent
-EditArea的click事件进行设置id，和component
-渲染SelectedMask
-SelectedMask展示dropDown、调用deleteComponent
-渲染SelectedMask要隐藏HoverMask
-window.resize时要updateComponent
-此外还把Component.name替换成Component.desc
+在 store 保存 curComponent
+EditArea 的 click 事件进行设置 id，和 component
+渲染 SelectedMask
+SelectedMask 展示 dropDown、调用 deleteComponent
+渲染 SelectedMask 要隐藏 HoverMask
+window.resize 时要 updateComponent
+此外还把 Component.name 替换成 Component.desc
+
+## 71.低代码编辑器：组件属性、样式编辑
+
+选中组件，会有右侧的编辑区域，修改属性时左侧 json 值修改。只要我们选中组件的时候，右侧展示组件对于属性的表单就行了。不同的组件有不同的表单属性，这部分明显时 componentConfig 里配置的。
+以按钮举例
+
+```ts
+export interface ComponentSetter {
+  type:string;
+  label:string;
+  name:string;
+  [key:string]:any;
+}
+export interface ComponentConfigs {
+  defaultProps:any;
+  setter:ComponentSetter[];
+}
+componentConfigs:{
+  Button:{
+    setter:[{
+      name:'type',
+      label:'按钮类型'
+      type:'select',
+      options:[{label:'主按钮',value:'primary'},
+      {label:'次按钮',value:'default'}]},
+      {name:"text",label:'文本',type:'input'}]
+  }
+}
+```
+
+将 setter[]渲染成表单对应的属性。
+
+```tsx
+import { Form, Select } from "antd";
+import { useComponentsStore } from "../../stores/components";
+import {
+  useComponentConfigsStore,
+  type ComponentConfigs,
+  type ComponentSetter,
+} from "../../stores/componentsConfig";
+import Input from "antd/es/input/Input";
+import { useEffect } from "react";
+
+export function ComponentAttr() {
+  const { componentConfig } = useComponentConfigsStore();
+  const { curComponent, curComponentId, updateComponentProps } =
+    useComponentsStore();
+  const [form] = Form.useForm();
+  // 如果当前选中的存在就不渲染
+  if (!curComponentId || !curComponent) {
+    return;
+  }
+  useEffect(() => {
+    const data = form.getFieldsValue();
+    const formData = { ...data, ...curComponent.props };
+    console.log({ formData });
+    form.setFieldsValue(formData); // 表单初始值由这里设置，item的修改在同步到curComponent
+  }, [curComponent]);
+  function renderComponent(item: ComponentSetter) {
+    const { type, options } = item;
+    if (type === "input") {
+      return <Input type="input"></Input>;
+    } else if (item.type === "select") {
+      return <Select options={options}></Select>;
+    }
+  }
+  function valueChange(changeValues: ComponentConfigs) {
+    if (curComponentId) {
+      updateComponentProps(curComponentId, changeValues);
+    }
+  }
+  return (
+    <div>
+      <Form
+        form={form}
+        labelCol={{ span: 8 }}
+        wrapperCol={{ span: 14 }}
+        onValuesChange={valueChange}
+      >
+        <Form.Item label="组件id" wrapperCol={{ span: 8 }}>
+          <Input value={curComponent.id} disabled></Input>
+        </Form.Item>
+        <Form.Item label="组件name">
+          <Input value={curComponent.name} disabled></Input>
+        </Form.Item>
+        <Form.Item label="组件描述">
+          <Input value={curComponent.desc} disabled></Input>
+        </Form.Item>
+        {componentConfig[curComponent.name].setter?.map((item) => {
+          return (
+            <Form.Item name={item.name} key={item.name} label={item.label}>
+              {renderComponent(item)}
+            </Form.Item>
+          );
+        })}
+      </Form>
+    </div>
+  );
+}
+```
+
+Component 添加更新样式
+
+```tsx
+interface Component {
+  styles:CssStyleProperties
+}
+interface Action {
+  updateComponentStyle:(id:number,style:CssStyleProperties)=>void;
+}
+//实现updateComponentStyle
+
+//componentsConfig文件
+interface ComponentConfig {
+  stylesSetter?: ComponentSetter[];
+}
+{
+  Button: {
+    name:'',
+    label:'',
+    type:'',
+    defaultProps:{},
+    desc:'',
+    component:xx,
+    setter:[],
+    stylesSetter:[{
+      name:'width',
+      type:'inputNumber',
+      label:'宽度'
+    }]
+  }
+}
+export interface CommonComponentProps extends PropsWithChildren {
+  id: number;
+  name: string;
+  [key: string]: any;
+  styles?: CSSProperties;
+}
+```
+
+实现 ComponentStyle
+
+```tsx
+
+```
+
+实现自定义的 style
+`npm install --save @monaco-editor/react`
+封装组件 CssEditor.tsx
+
+```tsx
+interface Props {
+  value:string
+  onChange?:EditorProps["onChange"];
+  options:editor.
+}
+const handleMount = (editor,monaco)=>{
+  editor.addCommand(,()=>{
+    editor.getAction('')?.run()
+  })
+}
+<MonacoEditor options={{
+  minimap:{
+    enable:false
+  },
+  scrollbar:{},
+  fontSize: 14}}></MonacoEditor>
+
+onChange -> debounce + 处理value + updateComponentStyle
+处理value -> 去除注释 去除.comp{} 转大驼峰
+```
+
+- 'npm i style-to-object' 需要处理：注释，.comp{},将 font-size 转为大驼峰之后更新到 store
+- 处理问题，删除编辑器这些样式后，左侧的样式不会消失 【添加replace参数】
+- 处理问题，切换组件，表单不会消失，`form.resetFields`
+- 切换选中组件，编辑器的 css 也需要重新设置 `editor设置value=css`
+- 处理问题，表单修改属性，编辑框的大小不会跟着改变，
+
+### 总结
+这节我们实现了属性和样式的编辑
+Component添加了setter、styleSetter
+Setting区域渲染对应的表单
+表单变化修改对应的style，通过props传给对应的Container
+样式编辑支持书写css，要实现style-to-object。 去除类，去除注释，转大驼峰
+当然，现在setter的表单配置不够完善，当后面新加组件的时候，需要什么表单类型在扩展就行

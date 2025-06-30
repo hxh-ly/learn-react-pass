@@ -5,14 +5,14 @@ import type { CommonComponentProps } from "../../interface";
 import { useComponentConfigsStore } from "../../stores/componentsConfig";
 import { useComponentsStore } from "../../stores/components";
 import { useMaterialDrop } from "../../hooks/useMaterialDrop";
-const Page = ({ id, children }: CommonComponentProps) => {
+const Page = ({ id, children,styles }: CommonComponentProps) => {
   const { dropRef, canDrop } = useMaterialDrop(["Button", "Container"], id);
   return (
     <div
       ref={dropRef}
       data-component-id={id}
       className="p-[20px] h-[100%] box-border"
-      style={{ border: canDrop ? "2px solid blue" : "none" }}
+      style={{ border: canDrop ? "2px solid blue" : "none" ,...styles}}
     >
       {children}
     </div>

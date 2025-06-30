@@ -47,7 +47,7 @@ export function SelectedMask(props: SelectedMaskProps) {
       width: nodeWidth,
       height: nodeHeight,
     } = node.getBoundingClientRect();
-    console.log(nodeWidth);
+    //console.log(nodeWidth);
     let labelTop = nodeTop - top + container!.scrollTop;
     let labelLeft = nodeLeft - left + nodeWidth;
     if (labelTop <= 0) {

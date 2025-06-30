@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { create } from "zustand";
 export interface Component {
   id: number;
@@ -5,7 +6,8 @@ export interface Component {
   props: any;
   children?: Component[];
   parentId?: number;
-  desc?:string;
+  desc?: string;
+  styles?: CSSProperties;
 }
 
 interface State {
@@ -17,7 +19,12 @@ interface Action {
   addComponent: (item: Component, parentId?: number) => void;
   deleteComponent: (id: number) => void;
   updateComponentProps: (id: number, props: any) => void;
-  setCurComponent: (id: number|null) => void;
+  setCurComponent: (id: number | null) => void;
+  updateComponentStyle: (
+    id: number,
+    style: CSSProperties,
+    replace?: boolean
+  ) => void;
 }
 
 export const useComponentsStore = create<State & Action>((set, get) => {
@@ -84,6 +91,21 @@ export const useComponentsStore = create<State & Action>((set, get) => {
           curComponentId: id,
           curComponent: getComponentById(id, state.components),
         };
+      });
+    },
+    updateComponentStyle: (
+      id: number,
+      styles: CSSProperties,
+      replace?: boolean
+    ) => {
+      set((state) => {
+        const comp = getComponentById(id, state.components);
+        if (!comp) {
+          return { components: [...state.components] };
+        }
+        comp.styles = replace ? { ...styles } : { ...comp?.styles, ...styles };
+        console.log(comp.styles);
+        return { components: [...state.components] };
       });
     },
   };

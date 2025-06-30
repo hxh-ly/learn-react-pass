@@ -15,7 +15,7 @@ export function EditArea() {
   const { componentConfig } = useComponentConfigsStore();
   console.log(components);
   const [overId, setOverId] = useState<number>();
-  
+
   const handleOver: MouseEventHandler = (e) => {
     const path = e.nativeEvent.composedPath();
     for (let i of path) {
@@ -53,6 +53,7 @@ export function EditArea() {
           name: item.name,
           ...init.defaultProps,
           ...item.props,
+          styles: { ...item.styles },
         },
         renderComponent(item.children || [])
       );
