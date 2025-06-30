@@ -3,6 +3,8 @@ import { useComponentsStore, type Component } from "../../stores/components";
 import { useComponentConfigsStore } from "../../stores/componentsConfig";
 import React from "react";
 import { message } from "antd";
+import type { GotoLinkConfig } from "../Setting/action/GoToLink";
+import type { ShowMessageConfig } from "../Setting/action/ShowMessage";
 
 export function Preview() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -13,19 +15,23 @@ export function Preview() {
     componentConfig[component.name].events?.forEach((item) => {
       const eventName = component.props[item.name];
       if (eventName) {
-        const { type } = eventName;
-        console.log(type, item.name);
+        console.log("preview set click event", item.name);
         props[item.name] = () => {
-          if (type === "goToLink" && eventName.url) {
-            window.location.href = eventName.url;
-          } else if (type === "showMessage" && eventName.config) {
-            console.log("~~~");
-            if (eventName.config.type === "success") {
-              messageApi.success(eventName.config.text, 1000);
-            } else if (eventName.config.type === "error") {
-              messageApi.error(eventName.config.text, 1000);
+          console.log(eventName.actions);
+          (eventName.actions || []).map(
+            (everyConfig: GotoLinkConfig | ShowMessageConfig) => {
+              const { type } = everyConfig;
+              if (type === "goToLink" && everyConfig.url) {
+                window.location.href = everyConfig.url;
+              } else if (type === "showMessage" && everyConfig.config) {
+                if (everyConfig.config.type === "success") {
+                  messageApi.success(everyConfig.config.text, 1000);
+                } else if (everyConfig.config.type === "error") {
+                  messageApi.error(everyConfig.config.text, 1000);
+                }
+              }
             }
-          }
+          );
         };
       }
     });

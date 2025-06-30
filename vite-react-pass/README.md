@@ -3466,46 +3466,49 @@ onChange -> debounce + 处理value + updateComponentStyle
 ```
 
 - 'npm i style-to-object' 需要处理：注释，.comp{},将 font-size 转为大驼峰之后更新到 store
-- 处理问题，删除编辑器这些样式后，左侧的样式不会消失 【添加replace参数】
+- 处理问题，删除编辑器这些样式后，左侧的样式不会消失 【添加 replace 参数】
 - 处理问题，切换组件，表单不会消失，`form.resetFields`
 - 切换选中组件，编辑器的 css 也需要重新设置 `editor设置value=css`
 - 处理问题，表单修改属性，编辑框的大小不会跟着改变，
 
 ### 总结
+
 这节我们实现了属性和样式的编辑
-Component添加了setter、styleSetter
-Setting区域渲染对应的表单
-表单变化修改对应的style，通过props传给对应的Container
-样式编辑支持书写css，要实现style-to-object。 去除类，去除注释，转大驼峰
-当然，现在setter的表单配置不够完善，当后面新加组件的时候，需要什么表单类型在扩展就行
+Component 添加了 setter、styleSetter
+Setting 区域渲染对应的表单
+表单变化修改对应的 style，通过 props 传给对应的 Container
+样式编辑支持书写 css，要实现 style-to-object。 去除类，去除注释，转大驼峰
+当然，现在 setter 的表单配置不够完善，当后面新加组件的时候，需要什么表单类型在扩展就行
 
 ## 72.低代码编辑器：预览、大纲
+
 先实现左侧的大纲和源码
 ![大纲和源码](./readmeImg/72_preview_outline.png)
 components/Material/Wrapper/index.tsx
+
 ```tsx
 
 ```
+
 实现大纲，树形展示组件树
 components/Outline/index.tsx
 
-
-使用编辑器展示json
+使用编辑器展示 json
 components/Source/index.tsx
 
-
 实现预览功能，每个组件都要区分编辑和预览两种状态，甚至渲染的内容都不相同。最好分开写
-每个组件添加`dev` `prod` 每个组件实现dev和prod.tsx 
+每个组件添加`dev` `prod` 每个组件实现 dev 和 prod.tsx
 
-prod.tsx和dev的区别
-- 不用带data-component-id
-- 不用带border，不用带drop事件
-- Page不用带 h-[100%]
+prod.tsx 和 dev 的区别
 
-在componentConfig注册下
-在EditArea的render改下，非dev不渲染
-+一个Preview组件，只需要实现将json递归渲染成prod组件就行。
-store+一个mode来切换编辑和渲染状态
+- 不用带 data-component-id
+- 不用带 border，不用带 drop 事件
+- Page 不用带 h-[100%]
+
+在 componentConfig 注册下
+在 EditArea 的 render 改下，非 dev 不渲染 +一个 Preview 组件，只需要实现将 json 递归渲染成 prod 组件就行。
+store+一个 mode 来切换编辑和渲染状态
+
 ```ts
 interface State {
   mode:'edit'|'preview'
@@ -3514,29 +3517,59 @@ interface Action {
   setMode:(mode:State['mode']=>void)
 }
 ```
-LowcodeEditor根据不同的mode去切换渲染
 
-Header加一个按钮切换mode
+LowcodeEditor 根据不同的 mode 去切换渲染
+
+Header 加一个按钮切换 mode
+
 ```tsx
 
 ```
 
 ### 总结
+
 实现大纲，源码、预览功能
-大纲需要tree组件展示
-源码通过编辑器展示json
-添加mode状态切换预览和编辑
+大纲需要 tree 组件展示
+源码通过编辑器展示 json
+添加 mode 状态切换预览和编辑
 
 ## 73.低代码编辑器：事件绑定
+
 选中组件，在事件面版会列出可绑定的事件
 选中某个事件，可以添加动作
 
-不同组件可绑定的事件是不同的，实现config添加事件属性,给button绑定2个事件
-实现ComponentEvent组件，使用collapse
-实现给Component的props绑定上事件,提供两种类型goToLink和showMessage,如果是goToLink的提供url输入
-实现给preview绑定事件，实际就是修改component的props属性，在button注入props
+不同组件可绑定的事件是不同的，实现 config 添加事件属性,给 button 绑定 2 个事件
+实现 ComponentEvent 组件，使用 collapse
+实现给 Component 的 props 绑定上事件,提供两种类型 goToLink 和 showMessage,如果是 goToLink 的提供 url 输入
+实现给 preview 绑定事件，实际就是修改 component 的 props 属性，在 button 注入 props
 动作后面会越来越多，抽离成组件 /Setting/action/GoToLink
-实现另一个动作，ShowMessage, 实现select【config.type】+ input【config.text】,ComponentEvent要添加showMessage的组件。在preview运行时在click动作实现
+实现另一个动作，ShowMessage, 实现 select【config.type】+ input【config.text】,ComponentEvent 要添加 showMessage 的组件。在 preview 运行时在 click 动作实现
 
 ### 总结
-这节我们实现了事件绑定，需要在compoenntConfig进行配置，在setting面板展示配置的可用事件，事件有不同的动作。在表单设置的时候进行props的赋值，在Preview的时候进行事件的绑定
+
+这节我们实现了事件绑定，需要在 compoenntConfig 进行配置，在 setting 面板展示配置的可用事件，事件有不同的动作。在表单设置的时候进行 props 的赋值，在 Preview 的时候进行事件的绑定
+
+## 74.低代码编辑器：动作弹窗
+
+使用弹窗展示动作
+Setting/ActionModel.tsx, 将 GoToLink 和 ShowMessage 封装在 ActionModel，只对外提供 config，只有调用 handleOk 时，在 CommponentEvent 执行 updateComponentProps 的动作
+
+```tsx
+interface ModelProps {
+  visiable: boolean;
+  event: ComponentEvent;
+  handleOK: () => void;
+  handleCancel: () => void;
+}
+```
+
+支持多个 actions 的结构，需要在调用 handleOk 时处理
+面板支持展示所有事件的 action，要对 btn 进行阻止冒泡处理
+preview 对所有 actons 进行遍历执行
+面板支持展示所有事件的 action，添加对应 action 对删除,在 Collapse 遍历 actions 渲染，然后添加删除方法。`actions.splice(idx,1)`
+
+### 总结
+
+setting 里如果动作多了不好展示，本节实现的动作选择弹窗
+支持多动作 action
+支持动作的删除

@@ -1,8 +1,12 @@
-import { Collapse, Input, Select } from "antd";
+import { Button, Collapse, Input, Select } from "antd";
 import { useComponentsStore } from "../../stores/components";
 import { useComponentConfigsStore } from "../../stores/componentsConfig";
-import { GoToLink } from "./action/GoToLink";
-import { ShowMessage } from "./action/ShowMessage";
+import { GoToLink, type GotoLinkConfig } from "./action/GoToLink";
+import { ShowMessage, type ShowMessageConfig } from "./action/ShowMessage";
+import { ActionModel } from "./ActionModel";
+import { useState } from "react";
+import type { ComponentEvent } from "../../stores/componentsConfig";
+import { DeleteOutlined } from "@ant-design/icons";
 export function ComponentEvent() {
   const { components, setCurComponent, curComponent, updateComponentProps } =
     useComponentsStore();
@@ -16,31 +20,79 @@ export function ComponentEvent() {
     }
     updateComponentProps(curComponent.id, { [eventName]: { type: value } });
   };
-
+  function deleteAction(event: string, idx: number) {
+    let ac = curComponent?.props?.[event]?.actions || [];
+    ac.splice(idx, 1);
+    updateComponentProps(curComponent!.id, { [event]: { action: ac } });
+  }
+  const [onShow, isOnSHow] = useState(false);
+  const [selectEvent, setSelectEvent] = useState<ComponentEvent>();
   const items = (componentConfig[curComponent.name].events || []).map(
     (item, idx) => {
       return {
         key: item.name,
-        label: item.label,
+        label: (
+          <div className="flex justify-between leading-[30px]">
+            {item.label}
+            <Button
+              type="primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectEvent(item);
+                isOnSHow(true);
+              }}
+            >
+              添加动作
+            </Button>
+          </div>
+        ),
         children: (
           <div>
-            <div className="flex items-center">
-              <div>动作:</div>
-              <Select
-                className="w-[160px]"
-                options={[
-                  { label: "显示提示", value: "showMessage" },
-                  { label: "跳转链接", value: "goToLink" },
-                ]}
-                onChange={(value) => handleChange(item.name, value)}
-                value={curComponent?.props?.[item.name]?.type}
-              ></Select>
-            </div>
-            {curComponent?.props?.[item.name]?.type === "goToLink" && (
-              <GoToLink item={item}></GoToLink>
-            )}
-            {curComponent?.props?.[item.name]?.type === "showMessage" && (
-              <ShowMessage item={item}></ShowMessage>
+            {(curComponent.props[item.name]?.actions || []).map(
+              (
+                itemConfig: GotoLinkConfig | ShowMessageConfig,
+                index: number
+              ) => {
+                return (
+                  <div key={index}>
+                    {itemConfig.type === "goToLink" ? (
+                      <div className="border border-[#aaa] m-[10px] p-[10px] relative">
+                        <div className="text-[blue]">跳转链接</div>
+                        <div>{itemConfig.url}</div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => deleteAction(item.name, index)}
+                        >
+                          <DeleteOutlined />
+                        </div>
+                      </div>
+                    ) : null}
+                    {itemConfig.type === "showMessage" ? (
+                      <div className="border border-[#aaa] m-[10px] p-[10px] relative">
+                        <div className="text-[blue]">消息弹窗</div>
+                        <div>{itemConfig.config.type}</div>
+                        <div>{itemConfig.config.text}</div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => deleteAction(item.name, index)}
+                        >
+                          <DeleteOutlined />
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              }
             )}
           </div>
         ),
@@ -49,7 +101,36 @@ export function ComponentEvent() {
   );
   return (
     <div className="px-[10px]">
-      <Collapse items={items} className="mb-[10px]"></Collapse>
+      <Collapse
+        items={items}
+        className="mb-[10px]"
+        defaultActiveKey={
+          componentConfig[curComponent.name]?.events?.map(
+            (item) => item.name
+          ) || []
+        }
+      ></Collapse>
+      <ActionModel
+        visiable={onShow}
+        handleOK={(config) => {
+          if (!curComponent || !config) {
+            return;
+          }
+          updateComponentProps(curComponent.id, {
+            [selectEvent!.name]: {
+              actions: [
+                ...(curComponent.props[selectEvent!.name]?.actions || []),
+                config,
+              ],
+            },
+          });
+          isOnSHow(false);
+        }}
+        handleCancel={() => {
+          isOnSHow(false);
+        }}
+        event={selectEvent}
+      ></ActionModel>
     </div>
   );
 }
