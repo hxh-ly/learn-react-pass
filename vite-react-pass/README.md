@@ -3597,3 +3597,45 @@ func({
 - CompnentEvent在editAction设置curIndex，用于handleOk的时候进行update。这里注意curAction存在的时候是编辑，不存在是新增。结束置空curAction
 - 有回显需求的表单，需要用受控模式来写 useEffect监听value，重置表单值
   
+
+  ## 76.低代码编辑器：组件联动
+  场景：点击btn实现隐藏视频组件
+  原理：forwardRef+useImperativeHandle
+  实现：在递归renderComponent把组件ref收集起来，放到一个map里
+  {
+    1111:{
+      aaa(){},
+      bbb(){}
+    },
+    222:{
+      ccc(){},
+      ddd(){}
+    }   
+  }
+  这样id为111的钻想要调用id为222的组件的ccc方法，只需要在动作里加一个配置
+  actions:[{
+    type:'componentMethod',
+    config:{
+      componentId:222,
+      method:'ccc'
+    }
+  }]
+  然后处理事件的时候，根据这个componenId和method从refs里拿到对应的方法执行就好了
+
+新增Model基础组件，
+创建materials/Modal/prod.tsx，暴露open和close
+实现materials/Modal/dev.tsx，实现drop
+配置componentConfig
+预览查看、设置属性样式、设置event
+回头做组件联动，componentConfig新增属性 methods?:ComponentMethod
+setting新增tab组件方法，对应新增组件<ComponentMethod>,新增ComponentsMethodConfig
+实现ComponentMethod组件 2个select，一个select组件，一个select组件方法
+componentEvent显示的acton列表 type=componentMethod
+处理回显 curId，curMethod
+Preview有个ref收集，render传入ref，点击click处理type=componentMethod
+
+### 总结
+这节我们实现了组件联动，也就是一个组件可以调用另一个组件的方法
+原理是通过ref+imperativeHandle，事件触发的时候根据配置调用对应componentId的对应method
+这样预览的时候就收集所有ref，触发找到组件调用method
+事件绑定功能较为完整，内置事件，自定义事件，组件联动

@@ -1,5 +1,5 @@
 import { Button, Collapse, Input, Select } from "antd";
-import { useComponentsStore } from "../../stores/components";
+import { getComponentById, useComponentsStore } from "../../stores/components";
 import { useComponentConfigsStore } from "../../stores/componentsConfig";
 import { GoToLink, type GotoLinkConfig } from "./action/GoToLink";
 import { ShowMessage, type ShowMessageConfig } from "./action/ShowMessage";
@@ -16,12 +16,6 @@ export function ComponentEvent() {
   }
   const [curActon, setCurAction] = useState<ActionConfig>();
   const [curIdx, setCurIdx] = useState<number>();
-  const handleChange = (eventName: string, value: string) => {
-    if (!curComponent) {
-      return;
-    }
-    updateComponentProps(curComponent.id, { [eventName]: { type: value } });
-  };
   function deleteAction(event: string, idx: number) {
     let ac = curComponent?.props?.[event]?.actions || [];
     ac.splice(idx, 1);
@@ -147,6 +141,41 @@ export function ComponentEvent() {
                         </div>
                       </div>
                     ) : null}
+                    {itemConfig.type === "componentMethod" ? (
+                      <div className="border border-[#aaa] m-[10px] p-[10px] relative">
+                        <div className="text-[blue]">组件方法</div>
+                        <div>
+                          {
+                            getComponentById(itemConfig.config.id, components)
+                              ?.desc
+                          }
+                        </div>
+                        <div>{itemConfig.config.id}</div>
+                        <div>{itemConfig.config.method}</div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => deleteAction(item.name, index)}
+                        >
+                          <DeleteOutlined />
+                        </div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 30,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => editAction(item.name, index)}
+                        >
+                          <EditOutlined />
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 );
               }
@@ -200,6 +229,7 @@ export function ComponentEvent() {
         action={curActon}
         handleCancel={() => {
           isOnSHow(false);
+          setCurAction(undefined);
         }}
         event={selectEvent}
       ></ActionModel>

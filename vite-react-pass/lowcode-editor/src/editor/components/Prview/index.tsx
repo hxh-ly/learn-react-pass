@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useComponentsStore, type Component } from "../../stores/components";
 import { useComponentConfigsStore } from "../../stores/componentsConfig";
-import React from "react";
+import React, { useRef } from "react";
 import { message } from "antd";
 import type { GotoLinkConfig } from "../Setting/action/GoToLink";
 import type { ShowMessageConfig } from "../Setting/action/ShowMessage";
@@ -11,6 +11,7 @@ export function Preview() {
   const [messageApi, contextHolder] = message.useMessage();
   const { components } = useComponentsStore();
   const { componentConfig } = useComponentConfigsStore();
+  const allRef = useRef<Record<string, any>>({});
   function handleEvent(component: Component) {
     const props: Record<string, any> = {};
     componentConfig[component.name].events?.forEach((item) => {
@@ -38,6 +39,12 @@ export function Preview() {
                   messageApi.success(content);
                 },
               });
+            } else if (type === "componentMethod" && everyConfig.config) {
+              const comp = allRef.current[everyConfig.config.id];
+              console.log("action type componentMethod");
+              if (comp?.[everyConfig.config.method]) {
+                comp[everyConfig.config.method]();
+              }
             }
           });
         };
@@ -59,6 +66,9 @@ export function Preview() {
           id: item.id,
           name: item.name,
           ...item.props,
+          ref: (ref: Record<string, any>) => {
+            allRef.current[item.id] = ref;
+          },
           ...handleEvent(item),
           styles: { ...item.styles },
         },

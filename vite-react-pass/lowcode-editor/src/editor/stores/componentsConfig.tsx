@@ -5,6 +5,8 @@ import ContainerDev from "../materials/Container/dev";
 import ContainerProd from "../materials/Container/prod";
 import ButtonDev from "../materials/Button/dev";
 import ButtonProd from "../materials/Button/prod";
+import ModalDev from "../materials/Model/dev";
+import ModalProd from "../materials/Model/prod";
 export interface ComponentSetter {
   type: string;
   label: string;
@@ -15,6 +17,10 @@ export interface ComponentEvent {
   label: string;
   name: string;
 }
+export interface ComponentMethod {
+  name: string;
+  label: string;
+}
 export interface ComponentConfigs {
   name: string;
   defaultProps: any;
@@ -23,6 +29,7 @@ export interface ComponentConfigs {
   setter?: ComponentSetter[];
   stylesSetter?: ComponentSetter[];
   events?: ComponentEvent[];
+  methods?: ComponentMethod[];
   dev: any;
   prod: any;
 }
@@ -96,16 +103,56 @@ export const useComponentConfigsStore = create<State & Action>((set) => ({
           label: "高度",
         },
       ],
-      events:[
+      events: [
         {
-          label:'单击事件',
-          name:'onClick'
+          label: "单击事件",
+          name: "onClick",
         },
-         {
-          label:'双击事件',
-          name:'onDoubleClick'
-        }
-      ]
+        {
+          label: "双击事件",
+          name: "onDoubleClick",
+        },
+      ],
+    },
+    Modal: {
+      name: "Modal",
+      defaultProps: {
+        title: "modal",
+      },
+      setter: [
+        {
+          type: "input",
+          label: "标题",
+          name: "title",
+        },
+      ],
+      stylesSetter: [
+        {
+          type: "inputNumber",
+          name: "width",
+          label: "宽度",
+        },
+        {
+          type: "inputNumber",
+          name: "height",
+          label: "高度",
+        },
+      ],
+      events: [
+        {
+          label: "确认事件",
+          name: "onOk",
+        },
+        { label: "取消事件", name: "onCancel" },
+      ],
+      methods: [
+        { name: "open", label: "打开弹窗" },
+        { name: "close", label: "关闭弹窗" },
+      ],
+      component: ModalDev,
+      dev: ModalDev,
+      prod: ModalProd,
+      desc: "弹窗",
     },
   },
   registerComponentConfig: (name: string, item: ComponentConfigs) => {

@@ -5,12 +5,18 @@ import { ShowMessage, type ShowMessageConfig } from "./action/ShowMessage";
 import { CustomJs, type CustomJsConfig } from "./action/CustomJS";
 import { useEffect, useState } from "react";
 import { useComponentsStore } from "../../stores/components";
+import {
+  ComponentMethod,
+  type ComponentMethodConfig,
+} from "./action/ComponentMethod";
 
 const actionMap = {
   goToLink: "访问链接",
   showMessage: "消息提示",
+  componentMethod: "组件方法",
   customJs: "自定义JS",
 };
+const allTabs = ["访问链接", "消息提示", "组件方法", "自定义JS"];
 interface ModelProps {
   visiable: boolean;
   event?: ComponentEvent;
@@ -18,7 +24,11 @@ interface ModelProps {
   handleOK: (config?: ActionConfig) => void;
   handleCancel: () => void;
 }
-export type ActionConfig = GotoLinkConfig | ShowMessageConfig | CustomJsConfig;
+export type ActionConfig =
+  | GotoLinkConfig
+  | ShowMessageConfig
+  | CustomJsConfig
+  | ComponentMethodConfig;
 
 export function ActionModel({
   action,
@@ -53,7 +63,7 @@ export function ActionModel({
             value={key}
             onChange={(value) => setKey(value)}
             block
-            options={["访问链接", "消息提示", "自定义JS"]}
+            options={allTabs}
           ></Segmented>
           <div className="pt-[20px] h-[calc(100vh-60px-30px-20px)]">
             {key === "访问链接" && (
@@ -81,6 +91,16 @@ export function ActionModel({
                 }}
                 value={action?.type === "customJs" ? action.code : ""}
               ></CustomJs>
+            )}
+            {key === "组件方法" && (
+              <ComponentMethod
+                onChange={(config) => {
+                  setCurConfig(config);
+                }}
+                value={
+                  action?.type === "componentMethod" ? action.config : undefined
+                }
+              ></ComponentMethod>
             )}
           </div>
         </div>
