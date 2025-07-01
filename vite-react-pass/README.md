@@ -3573,3 +3573,27 @@ preview 对所有 actons 进行遍历执行
 setting 里如果动作多了不好展示，本节实现的动作选择弹窗
 支持多动作 action
 支持动作的删除
+
+## 75.低代码编辑器：自定义 JS
+### 功能列表
+- 支持自定义js的tab
+- 支持编辑，回显
+自定义 JS 可以通过 context 拿到组件信息，执行 doAction
+创建 Setting/actions/CustomJS.tsx
+ActionModel 添加 CustomJS，ComponentEvent 添加 CustomJS
+Perview 拿到 `type,code`进行执行
+
+```ts
+const func = new Function("context", code);
+func({
+  name: component.name,
+  props: component.props,
+  showMessage(content: string) {                                  },
+});
+```
+需要支持对actions的编辑
+- 添加编辑按钮，逻辑是传入action?:ActionConfig,初始化打开ActionModel，传入value={acton.config}
+- ComponentEvent在editAction设置CurAction 给ActionModel传入
+- CompnentEvent在editAction设置curIndex，用于handleOk的时候进行update。这里注意curAction存在的时候是编辑，不存在是新增。结束置空curAction
+- 有回显需求的表单，需要用受控模式来写 useEffect监听value，重置表单值
+  

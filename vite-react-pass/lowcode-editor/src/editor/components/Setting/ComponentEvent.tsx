@@ -3,10 +3,10 @@ import { useComponentsStore } from "../../stores/components";
 import { useComponentConfigsStore } from "../../stores/componentsConfig";
 import { GoToLink, type GotoLinkConfig } from "./action/GoToLink";
 import { ShowMessage, type ShowMessageConfig } from "./action/ShowMessage";
-import { ActionModel } from "./ActionModel";
+import { ActionModel, type ActionConfig } from "./ActionModel";
 import { useState } from "react";
 import type { ComponentEvent } from "../../stores/componentsConfig";
-import { DeleteOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 export function ComponentEvent() {
   const { components, setCurComponent, curComponent, updateComponentProps } =
     useComponentsStore();
@@ -14,6 +14,8 @@ export function ComponentEvent() {
   if (!curComponent) {
     return null;
   }
+  const [curActon, setCurAction] = useState<ActionConfig>();
+  const [curIdx, setCurIdx] = useState<number>();
   const handleChange = (eventName: string, value: string) => {
     if (!curComponent) {
       return;
@@ -23,7 +25,16 @@ export function ComponentEvent() {
   function deleteAction(event: string, idx: number) {
     let ac = curComponent?.props?.[event]?.actions || [];
     ac.splice(idx, 1);
-    updateComponentProps(curComponent!.id, { [event]: { action: ac } });
+    updateComponentProps(curComponent!.id, { [event]: { actions: ac } });
+  }
+  function editAction(event: string, idx: number) {
+    let ac = curComponent?.props?.[event]?.actions;
+    if (!curComponent || !ac?.length) {
+      return;
+    }
+    isOnSHow(true);
+    setCurAction(ac[idx]);
+    setCurIdx(idx);
   }
   const [onShow, isOnSHow] = useState(false);
   const [selectEvent, setSelectEvent] = useState<ComponentEvent>();
@@ -49,10 +60,7 @@ export function ComponentEvent() {
         children: (
           <div>
             {(curComponent.props[item.name]?.actions || []).map(
-              (
-                itemConfig: GotoLinkConfig | ShowMessageConfig,
-                index: number
-              ) => {
+              (itemConfig: ActionConfig, index: number) => {
                 return (
                   <div key={index}>
                     {itemConfig.type === "goToLink" ? (
@@ -69,6 +77,17 @@ export function ComponentEvent() {
                           onClick={() => deleteAction(item.name, index)}
                         >
                           <DeleteOutlined />
+                        </div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 30,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => editAction(item.name, index)}
+                        >
+                          <EditOutlined />
                         </div>
                       </div>
                     ) : null}
@@ -88,6 +107,44 @@ export function ComponentEvent() {
                         >
                           <DeleteOutlined />
                         </div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 30,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => editAction(item.name, index)}
+                        >
+                          <EditOutlined />
+                        </div>
+                      </div>
+                    ) : null}
+                    {itemConfig.type === "customJs" ? (
+                      <div className="border border-[#aaa] m-[10px] p-[10px] relative">
+                        <div className="text-[blue]">自定义JS</div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => deleteAction(item.name, index)}
+                        >
+                          <DeleteOutlined />
+                        </div>
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 30,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => editAction(item.name, index)}
+                        >
+                          <EditOutlined />
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -99,6 +156,33 @@ export function ComponentEvent() {
       };
     }
   );
+  const handleOk = (config?: ActionConfig) => {
+    if (!curComponent || !config) {
+      return;
+    }
+    if (curActon) {
+      let actions = curComponent.props[selectEvent!.name]?.actions;
+      actions[curIdx!] = {
+        ...config,
+      };
+      updateComponentProps(curComponent.id, {
+        [selectEvent!.name]: {
+          actions: [...(curComponent.props[selectEvent!.name]?.actions || [])],
+        },
+      });
+    } else {
+      updateComponentProps(curComponent.id, {
+        [selectEvent!.name]: {
+          actions: [
+            ...(curComponent.props[selectEvent!.name]?.actions || []),
+            config,
+          ],
+        },
+      });
+    }
+    setCurAction(undefined);
+    isOnSHow(false);
+  };
   return (
     <div className="px-[10px]">
       <Collapse
@@ -112,20 +196,8 @@ export function ComponentEvent() {
       ></Collapse>
       <ActionModel
         visiable={onShow}
-        handleOK={(config) => {
-          if (!curComponent || !config) {
-            return;
-          }
-          updateComponentProps(curComponent.id, {
-            [selectEvent!.name]: {
-              actions: [
-                ...(curComponent.props[selectEvent!.name]?.actions || []),
-                config,
-              ],
-            },
-          });
-          isOnSHow(false);
-        }}
+        handleOK={handleOk}
+        action={curActon}
         handleCancel={() => {
           isOnSHow(false);
         }}

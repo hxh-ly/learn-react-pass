@@ -5,6 +5,7 @@ import React from "react";
 import { message } from "antd";
 import type { GotoLinkConfig } from "../Setting/action/GoToLink";
 import type { ShowMessageConfig } from "../Setting/action/ShowMessage";
+import type { ActionConfig } from "../Setting/ActionModel";
 
 export function Preview() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -18,20 +19,27 @@ export function Preview() {
         console.log("preview set click event", item.name);
         props[item.name] = () => {
           console.log(eventName.actions);
-          (eventName.actions || []).map(
-            (everyConfig: GotoLinkConfig | ShowMessageConfig) => {
-              const { type } = everyConfig;
-              if (type === "goToLink" && everyConfig.url) {
-                window.location.href = everyConfig.url;
-              } else if (type === "showMessage" && everyConfig.config) {
-                if (everyConfig.config.type === "success") {
-                  messageApi.success(everyConfig.config.text, 1000);
-                } else if (everyConfig.config.type === "error") {
-                  messageApi.error(everyConfig.config.text, 1000);
-                }
+          (eventName.actions || []).map((everyConfig: ActionConfig) => {
+            const { type } = everyConfig;
+            if (type === "goToLink" && everyConfig.url) {
+              window.location.href = everyConfig.url;
+            } else if (type === "showMessage" && everyConfig.config) {
+              if (everyConfig.config.type === "success") {
+                messageApi.success(everyConfig.config.text, 1000);
+              } else if (everyConfig.config.type === "error") {
+                messageApi.error(everyConfig.config.text, 1000);
               }
+            } else if (type === "customJs" && everyConfig.code) {
+              const func = new Function("context", everyConfig.code);
+              func({
+                name: component.name,
+                props: component.props,
+                showMessage(content: string) {
+                  messageApi.success(content);
+                },
+              });
             }
-          );
+          });
         };
       }
     });
