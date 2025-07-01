@@ -7,6 +7,10 @@ import ButtonDev from "../materials/Button/dev";
 import ButtonProd from "../materials/Button/prod";
 import ModalDev from "../materials/Model/dev";
 import ModalProd from "../materials/Model/prod";
+import TableDev from "../materials/Table/dev";
+import TableProd from "../materials/Table/prod";
+import TableColumnDev from "../materials/TableColumn/dev";
+import TableColumnProd from "../materials/TableColumn/prod";
 export interface ComponentSetter {
   type: string;
   label: string;
@@ -153,6 +157,54 @@ export const useComponentConfigsStore = create<State & Action>((set) => ({
       dev: ModalDev,
       prod: ModalProd,
       desc: "弹窗",
+    },
+    Table: {
+      name: "Table",
+      defaultProps: {},
+      setter: [
+        {
+          type: "input",
+          label: "url",
+          name: "url",
+        },
+      ],
+      component: TableDev,
+      dev: TableDev,
+      prod: TableProd,
+      desc: "表格",
+    },
+    TableColumn: {
+      name: "TableColumn",
+      defaultProps: {
+        title: "column",
+        dataIndex: `col_${new Date().getTime()}`,
+        type: "text",
+      },
+      setter: [
+        {
+          type: "input",
+          label: "标题",
+          name: "title",
+        },
+        {
+          type: "select",
+          label: "类型",
+          name: "type",
+          options: [
+            { label: "文本", value: "text" },
+            { label: "日期", value: "date" },
+          ],
+        },
+        {
+          name: "dataIndex",
+          label: "字段",
+          type: "input",
+        },
+      ],
+      component: TableColumnDev,
+      dev: TableColumnDev,
+      prod: TableColumnProd,
+      desc: "表格列",
     },
   },
   registerComponentConfig: (name: string, item: ComponentConfigs) => {

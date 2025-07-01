@@ -10,19 +10,24 @@ import { useDrop } from "react-dnd";
 import type { CommonComponentProps } from "../../interface";
 import { Modal as AntdModal } from "antd";
 import { useMaterialDrop } from "../../hooks/useMaterialDrop";
-const Model = ({ children, title, styles, id }: CommonComponentProps) => {
-  const { dropRef, canDrop } = useMaterialDrop(["Button", "Container"], id);
+import { useEditDrag } from "../../hooks/useEditDrag";
+const Model = (props: CommonComponentProps) => {
+  const { dropRef, canDrop } = useMaterialDrop(
+    ["Button", "Container",'Table'],
+    props.id
+  );
+  useEditDrag(props, dropRef);
   return (
     <div
       ref={dropRef}
       className={`min-h-[100px] p-[20px] ${
         canDrop ? "border-[2px] border-[blue]" : "border-[1px] border-[#000]"
       }`}
-      style={{ ...styles }}
-      data-component-id={id}
+      style={{ ...props.styles }}
+      data-component-id={props.id}
     >
-      <h4>{title}</h4>
-      {children}
+      <h4>{props.title}</h4>
+      {props.children}
     </div>
   );
 };

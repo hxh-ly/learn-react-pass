@@ -22,6 +22,7 @@ export function ComponentAttr() {
     const formData = { ...data, ...curComponent.props };
     console.log({ formData });
     form.setFieldsValue(formData); // 表单初始值由这里设置，item的修改在同步到curComponent
+    console.log(curComponent)
   }, [curComponent]);
   function renderComponent(item: ComponentSetter) {
     const { type, options } = item;

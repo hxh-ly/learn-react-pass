@@ -6,7 +6,7 @@ import { useComponentConfigsStore } from "../../stores/componentsConfig";
 import { useComponentsStore } from "../../stores/components";
 import { useMaterialDrop } from "../../hooks/useMaterialDrop";
 const Page = ({ id, children,styles }: CommonComponentProps) => {
-  const { dropRef, canDrop } = useMaterialDrop(["Button", "Container",'Modal'], id);
+  const { dropRef, canDrop } = useMaterialDrop(["Button", "Container",'Modal','Table'], id);
   return (
     <div
       ref={dropRef}
