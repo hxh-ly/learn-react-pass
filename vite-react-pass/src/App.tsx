@@ -22,6 +22,7 @@ import { Home41 } from "./home/home43";
 import { Home52 } from "./home/home52";
 import { Home53 } from "./home/home53";
 import { Home54 } from "./home/home54";
+import { Home80 } from "./home/home80";
 function App() {
   const [count, setCount] = useState(0);
 
@@ -43,7 +44,8 @@ function App() {
       {/* {Home41()} */}
      {/*  <Home52 /> */}
       {/* <Home53/> */}
-      <Home54/>
+     {/*  <Home54/> */}
+     <Home80></Home80>
     </>
   );
 }

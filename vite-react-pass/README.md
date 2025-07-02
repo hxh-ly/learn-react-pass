@@ -3684,5 +3684,132 @@ props[item.name] = (...args: any[]) => {
 ```
 
 ### 总结
-Form暴露了submit方法，通过btn触发sumbit。然后给Form的onFinish绑定一个发请求的动作。
+
+Form 暴露了 submit 方法，通过 btn 触发 sumbit。然后给 Form 的 onFinish 绑定一个发请求的动作。
 至此，我们的低代码编辑器比较完善了，可以添加物料，动作
+
+## 79.低代码编辑器：项目总结
+
+过下整体功能：
+
+- 可拖拽物料组件到画布区，可以放在任意层次：
+- 组件可拖拽改变位置：
+- 组件选中后可编辑属性
+- 编辑样式
+- 绑定事件【内置事件，自定义 js，或调用其他组件方法】
+- 可编辑，删除事件
+- 可切换大纲，源码视图
+- 编辑后可预览
+- 核心 JSON
+
+```json
+// 所有的核心就是一个JSON，json格式形如
+{
+  id:'',
+  parentId:'',
+  desc:'',
+  props:{
+    onClick:{'actions':[]}
+  },
+  children:[],
+  styles:{}
+}
+
+// 所有的配置是componentConfig，json格式形如
+componentConfig:{
+  Button:{
+  name:'Button',
+  desc:'Button',
+  defaultProps:{name:'aaa'},
+  setter:[{type:"input",label:'姓名',name:'name'}],
+  stylesSetter:[{}],
+  events:[{name:'onClick',label:'单击事件'},{}]
+  methods:[{name:'open',label:'打开'},{name:'',label:''}]
+  }
+}
+```
+
+### 实现说明
+
+- 物料区拖拽组件到画布区，就是在 json 的某一级添加一个组件对象
+- 右侧编辑属性，就是修改 json 里某个组件对象的属性
+- 大纲就是 json 的树状展示
+- 使用 alloment 实现 split pane 布局，tailwind 写样式，zustand 做全局 store
+- store 存放 component，add，update，delete
+- 创建 componentConfig 的全局 store，用来保存组件配置
+- 实现 renderComponent 将 json 渲染成 dom
+- 实现 hoverMask 和 clickMask，都是使用一个 div 挂在某个 class 下，计算 getBoundingClientRect 的 width、height、top、left
+- componentConfig 加了 setter 和 stylesSetter 保存 props 配置和样式配置
+- 在 Setting 区渲染对应表单，更改时修改 component 属性
+- 然后实现了源码、大纲、预览的功能
+- 然后实现了事件绑定 【内置事件，自定义 js，提供组件方法】
+- 实现了动作选择弹窗
+- 实现了组件联动 forwardRef+useImperativeHandle
+- 添加了 Table Form 物料
+- 这个项目也有挺多技术亮点的：
+  基于 react-dnd 实现了拖拽，可以拖拽物料到组件树的任意层级
+  通过 zustand 实现了全局 store 的存储，比如组件树、组件配置等，并用 persist 中间件做了持久化
+  通过 tailwind 来写样式，不需要写 css 文件
+  通过 getBoudingClientRect 拿到 hover、click 的组件边界，动态计算编辑框位置
+  通过 json 递归渲染组件，基于 React.cloneElement 来修改组件 props
+  通过 ref 实现了组件联动，组件通过 forwardRef + useImperativeHandle 暴露方法，然后全局注册，供别的组件调用
+
+## 80.快速掌握 ReactFlow
+
+```
+npx create-vite react-flow-test
+npm install --save @xyflow/react
+```
+
+```tsx
+const initialNodes = [
+  { id: 0, position: { x: 0, y: 0 }, data: { label: "1" } },
+  { id: 1, position: { x: 0, y: 100 }, data: { label: "2" } },
+];
+const initialEdges = [
+  {
+    source: "1",
+    target: "2",
+    id: "e1-2",
+  },
+];
+
+import {ReactFlow} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+export function App(){
+  return <>
+    <ReactFlow nodes={initialNodes} edges={initialEdges}></ReactFlow>
+  </>
+}
+```
+实现自己绘制节点
+```tsx
+function RedNode(){
+
+}
+
+nodeTypes = {{
+  red:RedNode
+}}
+```
+
+实现自己绘制边
+```tsx
+function CustomEdge(){
+  return <>
+  <BasePath></BasePath>
+  <EdgeLabelRender ><div></div></EdgeLabelRender>
+  </>
+}
+
+edgeTypes = {{
+  custom:CustomEdge
+}}
+```
+
+### 总结
+应用：AI工具的工作流编辑、低代码的逻辑编排
+点，线，和三个事件【nodesChange\edgesChange\connect】
+自定义点，自定义边
+小工具【minimap、control、pane、background】
+
