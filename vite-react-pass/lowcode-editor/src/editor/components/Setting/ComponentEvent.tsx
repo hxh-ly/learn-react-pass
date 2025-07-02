@@ -26,9 +26,10 @@ export function ComponentEvent() {
     if (!curComponent || !ac?.length) {
       return;
     }
-    isOnSHow(true);
-    setCurAction(ac[idx]);
+    setSelectEvent(componentConfig[curComponent.name].events?.find(v=>v.name===event));
     setCurIdx(idx);
+    setCurAction(ac[idx]);
+    isOnSHow(true);
   }
   const [onShow, isOnSHow] = useState(false);
   const [selectEvent, setSelectEvent] = useState<ComponentEvent>();
@@ -187,6 +188,7 @@ export function ComponentEvent() {
   );
   const handleOk = (config?: ActionConfig) => {
     if (!curComponent || !config) {
+        console.log(config)
       return;
     }
     if (curActon) {

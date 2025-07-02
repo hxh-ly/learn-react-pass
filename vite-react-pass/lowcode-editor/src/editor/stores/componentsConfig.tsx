@@ -11,6 +11,8 @@ import TableDev from "../materials/Table/dev";
 import TableProd from "../materials/Table/prod";
 import TableColumnDev from "../materials/TableColumn/dev";
 import TableColumnProd from "../materials/TableColumn/prod";
+import FormProd from "../materials/Form/prod";
+import FormDev from "../materials/Form/dev";
 export interface ComponentSetter {
   type: string;
   label: string;
@@ -205,6 +207,70 @@ export const useComponentConfigsStore = create<State & Action>((set) => ({
       dev: TableColumnDev,
       prod: TableColumnProd,
       desc: "表格列",
+    },
+    Form: {
+      name: "Form",
+      defaultProps: {},
+      setter: [
+        {
+          type: "input",
+          label: "标题",
+          name: "title",
+        },
+      ],
+      events: [
+        {
+          label: "结束事件",
+          name: "onFinish",
+        },
+      ],
+       methods: [
+        { name: "submit", label: "提交" },
+      ],
+      component: FormDev,
+      dev: FormDev,
+      prod: FormProd,
+      desc: "表单",
+    },
+    FormItem: {
+      name: "FormItem",
+      defaultProps: {
+        label: "xxx",
+        name: `col_${new Date().getTime()}`,
+        type: "input",
+      },
+      setter: [
+        {
+          type: "input",
+          label: "字段",
+          name: "name",
+        },
+        {
+          type: "input",
+          label: "label",
+          name: "label",
+        },
+        {
+          type: "select",
+          label: "类型",
+          name: "type",
+          options: [
+            { label: "密码", value: "password" },
+            { label: "日期", value: "date" },
+            { label: "输入框", value: "input" },
+          ],
+        },
+        {
+          type: "select",
+          label: "校验",
+          name: "rules",
+          options: [{ label: "必填", value: "required" }],
+        },
+      ],
+      component: FormDev,
+      dev: FormDev,
+      prod: FormDev,
+      desc: "表单项",
     },
   },
   registerComponentConfig: (name: string, item: ComponentConfigs) => {

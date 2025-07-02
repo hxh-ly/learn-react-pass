@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import { create } from "zustand";
+import { create, type StateCreator } from "zustand";
+import { persist } from "zustand/middleware";
 export interface Component {
   id: number;
   name: string;
@@ -28,8 +29,7 @@ interface Action {
   ) => void;
   setMode: (m: "edit" | "preview") => void;
 }
-
-export const useComponentsStore = create<State & Action>((set, get) => {
+const creator: StateCreator<State & Action> = (set, get) => {
   return {
     components: [
       {
@@ -49,10 +49,10 @@ export const useComponentsStore = create<State & Action>((set, get) => {
           let comp = getComponentById(parentId, state.components);
           if (comp) {
             if (comp.children) {
-              console.log("bbb");
+              console.log("addComponent push");
               comp.children.push(item);
             } else {
-              console.log("aaa");
+              console.log("addComponent init");
               comp.children = [item];
             }
           }
@@ -119,7 +119,12 @@ export const useComponentsStore = create<State & Action>((set, get) => {
       });
     },
   };
-});
+};
+export const useComponentsStore = create<State & Action>()(
+  persist(creator, {
+    name: "useComponentsStore",
+  })
+);
 
 export function getComponentById(
   id: number | null,

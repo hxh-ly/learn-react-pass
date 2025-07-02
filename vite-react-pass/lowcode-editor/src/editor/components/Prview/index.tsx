@@ -18,7 +18,7 @@ export function Preview() {
       const eventName = component.props[item.name];
       if (eventName) {
         console.log("preview set click event", item.name);
-        props[item.name] = () => {
+        props[item.name] = (...args:any[]) => {
           console.log(eventName.actions);
           (eventName.actions || []).map((everyConfig: ActionConfig) => {
             const { type } = everyConfig;
@@ -31,19 +31,19 @@ export function Preview() {
                 messageApi.error(everyConfig.config.text, 1000);
               }
             } else if (type === "customJs" && everyConfig.code) {
-              const func = new Function("context", everyConfig.code);
+              const func = new Function("context",'args', everyConfig.code);
               func({
                 name: component.name,
                 props: component.props,
                 showMessage(content: string) {
                   messageApi.success(content);
                 },
-              });
+              },args);
             } else if (type === "componentMethod" && everyConfig.config) {
               const comp = allRef.current[everyConfig.config.id];
               console.log("action type componentMethod");
               if (comp?.[everyConfig.config.method]) {
-                comp[everyConfig.config.method]();
+                comp[everyConfig.config.method](...args);
               }
             }
           });

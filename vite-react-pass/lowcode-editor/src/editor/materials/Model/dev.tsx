@@ -13,7 +13,7 @@ import { useMaterialDrop } from "../../hooks/useMaterialDrop";
 import { useEditDrag } from "../../hooks/useEditDrag";
 const Model = (props: CommonComponentProps) => {
   const { dropRef, canDrop } = useMaterialDrop(
-    ["Button", "Container",'Table'],
+    ["Button", "Container",'Table','Form'],
     props.id
   );
   useEditDrag(props, dropRef);

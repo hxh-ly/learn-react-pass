@@ -3575,67 +3575,114 @@ setting 里如果动作多了不好展示，本节实现的动作选择弹窗
 支持动作的删除
 
 ## 75.低代码编辑器：自定义 JS
+
 ### 功能列表
-- 支持自定义js的tab
+
+- 支持自定义 js 的 tab
 - 支持编辑，回显
-自定义 JS 可以通过 context 拿到组件信息，执行 doAction
-创建 Setting/actions/CustomJS.tsx
-ActionModel 添加 CustomJS，ComponentEvent 添加 CustomJS
-Perview 拿到 `type,code`进行执行
+  自定义 JS 可以通过 context 拿到组件信息，执行 doAction
+  创建 Setting/actions/CustomJS.tsx
+  ActionModel 添加 CustomJS，ComponentEvent 添加 CustomJS
+  Perview 拿到 `type,code`进行执行
 
 ```ts
 const func = new Function("context", code);
 func({
   name: component.name,
   props: component.props,
-  showMessage(content: string) {                                  },
+  showMessage(content: string) {},
 });
 ```
-需要支持对actions的编辑
-- 添加编辑按钮，逻辑是传入action?:ActionConfig,初始化打开ActionModel，传入value={acton.config}
-- ComponentEvent在editAction设置CurAction 给ActionModel传入
-- CompnentEvent在editAction设置curIndex，用于handleOk的时候进行update。这里注意curAction存在的时候是编辑，不存在是新增。结束置空curAction
-- 有回显需求的表单，需要用受控模式来写 useEffect监听value，重置表单值
-  
+
+需要支持对 actions 的编辑
+
+- 添加编辑按钮，逻辑是传入 action?:ActionConfig,初始化打开 ActionModel，传入 value={acton.config}
+- ComponentEvent 在 editAction 设置 CurAction 给 ActionModel 传入
+- CompnentEvent 在 editAction 设置 curIndex，用于 handleOk 的时候进行 update。这里注意 curAction 存在的时候是编辑，不存在是新增。结束置空 curAction
+- 有回显需求的表单，需要用受控模式来写 useEffect 监听 value，重置表单值
 
   ## 76.低代码编辑器：组件联动
-  场景：点击btn实现隐藏视频组件
-  原理：forwardRef+useImperativeHandle
-  实现：在递归renderComponent把组件ref收集起来，放到一个map里
-  {
-    1111:{
-      aaa(){},
-      bbb(){}
-    },
-    222:{
-      ccc(){},
-      ddd(){}
-    }   
-  }
-  这样id为111的钻想要调用id为222的组件的ccc方法，只需要在动作里加一个配置
-  actions:[{
-    type:'componentMethod',
-    config:{
-      componentId:222,
-      method:'ccc'
-    }
-  }]
-  然后处理事件的时候，根据这个componenId和method从refs里拿到对应的方法执行就好了
 
-新增Model基础组件，
-创建materials/Modal/prod.tsx，暴露open和close
-实现materials/Modal/dev.tsx，实现drop
-配置componentConfig
-预览查看、设置属性样式、设置event
-回头做组件联动，componentConfig新增属性 methods?:ComponentMethod
-setting新增tab组件方法，对应新增组件<ComponentMethod>,新增ComponentsMethodConfig
-实现ComponentMethod组件 2个select，一个select组件，一个select组件方法
-componentEvent显示的acton列表 type=componentMethod
+  场景：点击 btn 实现隐藏视频组件
+  原理：forwardRef+useImperativeHandle
+  实现：在递归 renderComponent 把组件 ref 收集起来，放到一个 map 里
+  {
+  1111:{
+  aaa(){},
+  bbb(){}
+  },
+  222:{
+  ccc(){},
+  ddd(){}
+  }  
+  }
+  这样 id 为 111 的钻想要调用 id 为 222 的组件的 ccc 方法，只需要在动作里加一个配置
+  actions:[{
+  type:'componentMethod',
+  config:{
+  componentId:222,
+  method:'ccc'
+  }
+  }]
+  然后处理事件的时候，根据这个 componenId 和 method 从 refs 里拿到对应的方法执行就好了
+
+新增 Model 基础组件，
+创建 materials/Modal/prod.tsx，暴露 open 和 close
+实现 materials/Modal/dev.tsx，实现 drop
+配置 componentConfig
+预览查看、设置属性样式、设置 event
+回头做组件联动，componentConfig 新增属性 methods?:ComponentMethod
+setting 新增 tab 组件方法，对应新增组件<ComponentMethod>,新增 ComponentsMethodConfig
+实现 ComponentMethod 组件 2 个 select，一个 select 组件，一个 select 组件方法
+componentEvent 显示的 acton 列表 type=componentMethod
 处理回显 curId，curMethod
-Preview有个ref收集，render传入ref，点击click处理type=componentMethod
+Preview 有个 ref 收集，render 传入 ref，点击 click 处理 type=componentMethod
 
 ### 总结
+
 这节我们实现了组件联动，也就是一个组件可以调用另一个组件的方法
-原理是通过ref+imperativeHandle，事件触发的时候根据配置调用对应componentId的对应method
-这样预览的时候就收集所有ref，触发找到组件调用method
+原理是通过 ref+imperativeHandle，事件触发的时候根据配置调用对应 componentId 的对应 method
+这样预览的时候就收集所有 ref，触发找到组件调用 method
 事件绑定功能较为完整，内置事件，自定义事件，组件联动
+
+## 77.低代码编辑器：拖拽优化、Table 组件
+
+已经拖动到中间的组件，可以继续在中间改变位置 --- 给组件加上 useDrag 即可
+item 传递的时候+dragType，如果是 move 就先删除后添加
+实现 table 组件，table 的 props 的 url。 column 根据 children 渲染{title,dataIndex,key} TableColumn 还没写, drop 添加 Page\Container\Modal
+添加 TableColumn，实现 dev,prod
+实现 TableColumn 的 prod，通过数据请求
+
+## 78.低代码编辑器：Form 组件、store 持久化
+
+实现 Form 组件 dev，input 使用 pointEvent:none
+实现 FormItem 用于配置
+
+实现 Form 组件 prod，需要 ref 暴露方法
+
+在添加自定义 Js 的时候，preview 需要修正下调用函数
+
+```ts
+props[item.name] = (...args: any[]) => {
+  else if (type === "customJs" && everyConfig.code) {
+              const func = new Function("context",'args', everyConfig.code);
+              func({
+                name: component.name,
+                props: component.props,
+                showMessage(content: string) {
+                  messageApi.success(content);
+                },
+              },args);
+            } else if (type === "componentMethod" && everyConfig.config) {
+              const comp = allRef.current[everyConfig.config.id];
+              console.log("action type componentMethod");
+              if (comp?.[everyConfig.config.method]) {
+                comp[everyConfig.config.method](...args);
+              }
+            }
+};
+```
+
+### 总结
+Form暴露了submit方法，通过btn触发sumbit。然后给Form的onFinish绑定一个发请求的动作。
+至此，我们的低代码编辑器比较完善了，可以添加物料，动作
