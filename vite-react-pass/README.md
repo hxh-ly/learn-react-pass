@@ -3774,15 +3774,19 @@ const initialEdges = [
   },
 ];
 
-import {ReactFlow} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-export function App(){
-  return <>
-    <ReactFlow nodes={initialNodes} edges={initialEdges}></ReactFlow>
-  </>
+import { ReactFlow } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+export function App() {
+  return (
+    <>
+      <ReactFlow nodes={initialNodes} edges={initialEdges}></ReactFlow>
+    </>
+  );
 }
 ```
+
 实现自己绘制节点
+
 ```tsx
 function RedNode(){
 
@@ -3794,6 +3798,7 @@ nodeTypes = {{
 ```
 
 实现自己绘制边
+
 ```tsx
 function CustomEdge(){
   return <>
@@ -3808,8 +3813,53 @@ edgeTypes = {{
 ```
 
 ### 总结
-应用：AI工具的工作流编辑、低代码的逻辑编排
+
+应用：AI 工具的工作流编辑、低代码的逻辑编排
 点，线，和三个事件【nodesChange\edgesChange\connect】
 自定义点，自定义边
 小工具【minimap、control、pane、background】
 
+## 81.ReactFlow 振荡器调音：项目介绍
+
+实现 节点编排相练，播放 波形频率不一样的，音量不一样的声音。
+振荡器节点可以多个结合，会把多种声音合并播放。
+
+## 82.ReactFlow 振荡器调音：流程图绘制
+
+实现三种自定义节点
+OscillatorNode.tsx
+VolumeNode.tsx 注意两端有 Handle
+OutputNode.tsx
+
+## 83.ReactFlow 振荡器调音：合成声音
+
+基本使用`AudioContext`
+
+```tsx
+const context = new AudioContext();
+const osc = context.createOscillator();
+osc.type = "sine";
+osc.frequency.value = 300;
+osc.start();
+const gain = context.createGain();
+gain.gain.value = 0.2;
+const out = context.destination;
+osc.connect(gain);
+gain.connect(out);
+```
+
+```tsx
+audio
+
+create(id,type,data)  点击btn调用
+
+remote(id)  删除节点的时候调用
+
+connect(sourceId,targetId) 创建链接调用
+
+disconnect(sourceId,targetId) 删除链接调用
+
+update(id,data) form调用
+```
+
+## 84.React服务端渲染：从SSR到hydrate
