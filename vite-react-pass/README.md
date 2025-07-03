@@ -3862,4 +3862,31 @@ disconnect(sourceId,targetId) 删除链接调用
 update(id,data) form调用
 ```
 
-## 84.React服务端渲染：从SSR到hydrate
+## 85.AudioContext实现在线弹钢琴
+使用style-to-object实现钢琴布局
+实现play函数，监听key按下调用play
+```tsx
+ function play(item: string) {
+    const frequency = keys[item].frequency;
+    if (!frequency) {
+      return;
+    }
+
+    const osc = context.createOscillator();
+    osc.frequency.value = frequency;
+    osc.type = "sine";
+    const volume = context.createGain();
+    osc.connect(volume);
+    volume.connect(context.destination);
+    volume.gain.setValueAtTime(0, context.currentTime);
+    volume.gain.linearRampToValueAtTime(1, context.currentTime + 0.01);
+    osc.start(context.currentTime);
+    volume.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1);
+    osc.stop(context.currentTime + 1);
+    document.getElementById(`key-${item}`)?.classList.add("pressed");
+    setTimeout(() => {
+      document.getElementById(`key-${item}`)?.classList.remove("pressed");
+    }, 200);
+  }
+```
+
