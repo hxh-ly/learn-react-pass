@@ -279,6 +279,61 @@ module.css 使用
 - 外层封装一层，加上上一步下一步的切换
   注意：
 
+## 38.组件实战：Form表单组件
+了解antd desgin的用法
+```tsx
+function App(){
+  <Form form={form} onFinish={}>
+    <Form.Item label='' name='' valuePropName='checked'>
+      <CheckBox></CheckBox>
+    </Form.Item>
+      <Form.Item label='' name=''>
+      <Input>
+    </Form.Item>
+  </Form>
+}
+```
+实现思路：
+实现提供Context
+```tsx
+interface FormContextProps {
+  value?: Record<string,any>,
+  setValue:(value:Record<string,any>)=>void,
+  onValueChange:(key:string,value:any)=>void,
+  validateRegister:(name:string,cb:Function)=>void
+}
+export default createContext<FormContextProps>()
+```
+实现Form组件
+```tsx
+// 清楚FormProps
+interface FormProps extends React.HTMLAttributes<HTMLFormElement> {
+  className: string;
+  style: CSSProperties;
+  initialValues: Record<string, any>;
+  onFinish?: (values: Record<string, any>) => void;
+  onFinishFailed?: (errors: Record<string, any>) => void;
+  children: React.ReactNode;
+}
+```
+实现FormItem组件
+```tsx
+interface ItemProps {
+  className: string;
+  style: CSSProperties;
+  label:string;
+  name:string;
+  rules:Record<string,any>[];
+  children:React.ReactElement;
+}
+// 2个state：value和error
+// useEffect: [values,values?.name] ->更改表单
+// useEffect:[value] -> 注册验证
+// 表单的chagne: 更改自己，更改context上的，做validator校验
+// 返回children 和 error提示的dom
+```
+与antd的区别，antd抽离了一个store，暴露出方法
+
 ## 52 实现 todo list
 
 1.拖拽插入（高亮）
@@ -3890,3 +3945,17 @@ update(id,data) form调用
   }
 ```
 
+## 85.React服务端渲染：从SSR到hydrate
+服务端渲染组件为string，拼接成html返回
+hydrate在渲染的过程，不创建html标签，而是创建关联已有的。这样就能避免不必要的渲染。
+```tsx
+import App from './App.tsx'
+hidrateRoot(document,getElementId('root'),App)
+```
+
+### 总结
+SSR是JSP时代就存在的古老技术，现在是通过node服务渲染组件成字符串，客户端再次渲染，这种同构渲染的模式。
+React SSR时服务端通过renderToString把组件树渲染成html字符串，浏览器通过hydrate把已有的dom关联到fiber树，加上交互逻辑和再次渲染。
+服务端renderToString就是递归拼接字符串的过程，遇到组件就传入函数执行，遇到标签就拼接对应字符串，最终返回一段html浏览器。
+浏览器端hidrate是通过在reconile端beginWork阶段，依次判断dom是否可以复用到当前Fiber，可以的话就设置fiber.stateNode,然后在complete阶段就可以跳过节点创建。
+这就是SSR从服务端renderToString到浏览器端端hydrate端的全流程原理。
