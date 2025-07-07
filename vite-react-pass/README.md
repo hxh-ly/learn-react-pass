@@ -70,6 +70,48 @@ interface SpaceProps extends React.HtmlAttributes<HtmlDivElement> {}
 - 【style，height，width，offset，onVisible，playload】
 - IntersectionObserver
 
+```tsx
+function MyLazyLoad(props) {
+  const observer = useRef<IntersectionObserver>();
+  useEffect(() => {
+    const options = {
+      rootMargin:
+        typeof props.offset === "number"
+          ? `${props.offset}px`
+          : props.offset || "0px",
+      threshold: 0,
+    };
+    observer.current = new IntersetionObserver(lazyHandler, options);
+    const node = divRef.current;
+    if (node instanceof HTMLElement) {
+      observer.current.observe(node);
+    }
+    return () => {
+      if (node instanceof HTMLElement && observer.current) {
+        observer.current.unobserve(node);
+      }
+    };
+  }, []);
+  function lazyHandler(entries: IntersectionObserverEntry[]) {
+    const [entry] = entries;
+    const { isIntersecting } = entry;
+    if (isIntersecting) {
+      setIsVisible(true);
+      props.onContentVisible?.();
+      if (divRef.current instanceof HTMLElement) {
+        observer.current.unobserve(divRef.current);
+      }
+    }
+  }
+  return <div ref={divRef}>{isVisiable ? children : props.playholder}</div>;
+}
+```
+### 总结
+当图片进入可视区域才加载到时候，可以用react-lazyload
+它支持设置playholder占位内容，设置offset距离可视区域多少才展示
+此外，它也可以用来实现组件进入可视区域时再加载，配置React.lazy和import()实现代码分割和异步加载。
+它的实现原理就是IntersectionObserver
+图片和组件的懒加载（进入可视区域再出发）是非常常见的需求，不但要会用react-lazyload实现这种需求，也要自己能实现。
 ## react-spring
 
 - useSpringValue/useSpring/useSpring 函数重载/多个元素的动画 useSprings/动画依次 useTrail/useSpringRef 拿到动画的 ref/多个动画安排 useChain
@@ -279,8 +321,10 @@ module.css 使用
 - 外层封装一层，加上上一步下一步的切换
   注意：
 
-## 38.组件实战：Form表单组件
-了解antd desgin的用法
+## 38.组件实战：Form 表单组件
+
+了解 antd desgin 的用法
+
 ```tsx
 function App(){
   <Form form={form} onFinish={}>
@@ -293,18 +337,22 @@ function App(){
   </Form>
 }
 ```
+
 实现思路：
-实现提供Context
+实现提供 Context
+
 ```tsx
 interface FormContextProps {
-  value?: Record<string,any>,
-  setValue:(value:Record<string,any>)=>void,
-  onValueChange:(key:string,value:any)=>void,
-  validateRegister:(name:string,cb:Function)=>void
+  value?: Record<string, any>;
+  setValue: (value: Record<string, any>) => void;
+  onValueChange: (key: string, value: any) => void;
+  validateRegister: (name: string, cb: Function) => void;
 }
-export default createContext<FormContextProps>()
+export default createContext<FormContextProps>();
 ```
-实现Form组件
+
+实现 Form 组件
+
 ```tsx
 // 清楚FormProps
 interface FormProps extends React.HTMLAttributes<HTMLFormElement> {
@@ -316,15 +364,17 @@ interface FormProps extends React.HTMLAttributes<HTMLFormElement> {
   children: React.ReactNode;
 }
 ```
-实现FormItem组件
+
+实现 FormItem 组件
+
 ```tsx
 interface ItemProps {
   className: string;
   style: CSSProperties;
-  label:string;
-  name:string;
-  rules:Record<string,any>[];
-  children:React.ReactElement;
+  label: string;
+  name: string;
+  rules: Record<string, any>[];
+  children: React.ReactElement;
 }
 // 2个state：value和error
 // useEffect: [values,values?.name] ->更改表单
@@ -332,7 +382,8 @@ interface ItemProps {
 // 表单的chagne: 更改自己，更改context上的，做validator校验
 // 返回children 和 error提示的dom
 ```
-与antd的区别，antd抽离了一个store，暴露出方法
+
+与 antd 的区别，antd 抽离了一个 store，暴露出方法
 
 ## 52 实现 todo list
 
@@ -3917,45 +3968,50 @@ disconnect(sourceId,targetId) 删除链接调用
 update(id,data) form调用
 ```
 
-## 85.AudioContext实现在线弹钢琴
-使用style-to-object实现钢琴布局
-实现play函数，监听key按下调用play
-```tsx
- function play(item: string) {
-    const frequency = keys[item].frequency;
-    if (!frequency) {
-      return;
-    }
+## 85.AudioContext 实现在线弹钢琴
 
-    const osc = context.createOscillator();
-    osc.frequency.value = frequency;
-    osc.type = "sine";
-    const volume = context.createGain();
-    osc.connect(volume);
-    volume.connect(context.destination);
-    volume.gain.setValueAtTime(0, context.currentTime);
-    volume.gain.linearRampToValueAtTime(1, context.currentTime + 0.01);
-    osc.start(context.currentTime);
-    volume.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1);
-    osc.stop(context.currentTime + 1);
-    document.getElementById(`key-${item}`)?.classList.add("pressed");
-    setTimeout(() => {
-      document.getElementById(`key-${item}`)?.classList.remove("pressed");
-    }, 200);
+使用 style-to-object 实现钢琴布局
+实现 play 函数，监听 key 按下调用 play
+
+```tsx
+function play(item: string) {
+  const frequency = keys[item].frequency;
+  if (!frequency) {
+    return;
   }
+
+  const osc = context.createOscillator();
+  osc.frequency.value = frequency;
+  osc.type = "sine";
+  const volume = context.createGain();
+  osc.connect(volume);
+  volume.connect(context.destination);
+  volume.gain.setValueAtTime(0, context.currentTime);
+  volume.gain.linearRampToValueAtTime(1, context.currentTime + 0.01);
+  osc.start(context.currentTime);
+  volume.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 1);
+  osc.stop(context.currentTime + 1);
+  document.getElementById(`key-${item}`)?.classList.add("pressed");
+  setTimeout(() => {
+    document.getElementById(`key-${item}`)?.classList.remove("pressed");
+  }, 200);
+}
 ```
 
-## 85.React服务端渲染：从SSR到hydrate
-服务端渲染组件为string，拼接成html返回
-hydrate在渲染的过程，不创建html标签，而是创建关联已有的。这样就能避免不必要的渲染。
+## 85.React 服务端渲染：从 SSR 到 hydrate
+
+服务端渲染组件为 string，拼接成 html 返回
+hydrate 在渲染的过程，不创建 html 标签，而是创建关联已有的。这样就能避免不必要的渲染。
+
 ```tsx
-import App from './App.tsx'
-hidrateRoot(document,getElementId('root'),App)
+import App from "./App.tsx";
+hidrateRoot(document, getElementId("root"), App);
 ```
 
 ### 总结
-SSR是JSP时代就存在的古老技术，现在是通过node服务渲染组件成字符串，客户端再次渲染，这种同构渲染的模式。
-React SSR时服务端通过renderToString把组件树渲染成html字符串，浏览器通过hydrate把已有的dom关联到fiber树，加上交互逻辑和再次渲染。
-服务端renderToString就是递归拼接字符串的过程，遇到组件就传入函数执行，遇到标签就拼接对应字符串，最终返回一段html浏览器。
-浏览器端hidrate是通过在reconile端beginWork阶段，依次判断dom是否可以复用到当前Fiber，可以的话就设置fiber.stateNode,然后在complete阶段就可以跳过节点创建。
-这就是SSR从服务端renderToString到浏览器端端hydrate端的全流程原理。
+
+SSR 是 JSP 时代就存在的古老技术，现在是通过 node 服务渲染组件成字符串，客户端再次渲染，这种同构渲染的模式。
+React SSR 时服务端通过 renderToString 把组件树渲染成 html 字符串，浏览器通过 hydrate 把已有的 dom 关联到 fiber 树，加上交互逻辑和再次渲染。
+服务端 renderToString 就是递归拼接字符串的过程，遇到组件就传入函数执行，遇到标签就拼接对应字符串，最终返回一段 html 浏览器。
+浏览器端 hidrate 是通过在 reconile 端 beginWork 阶段，依次判断 dom 是否可以复用到当前 Fiber，可以的话就设置 fiber.stateNode,然后在 complete 阶段就可以跳过节点创建。
+这就是 SSR 从服务端 renderToString 到浏览器端端 hydrate 端的全流程原理。
