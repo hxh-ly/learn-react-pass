@@ -1,0 +1,12 @@
+# pnpm-workspace.yaml
+packages:
+  - "react-pass"
+  - "lowcode-editor/**"
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - core-js
+  - esbuild
+  - fsevents

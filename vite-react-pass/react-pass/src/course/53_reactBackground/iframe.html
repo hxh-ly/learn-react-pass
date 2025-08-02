@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Preview</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+<script type="importmap"></script>
+<script type="module" id="appSrc"></script>
+<script type="module">
+/*   import React, {useState, useEffect} from 'react';
+  import ReactDOM from 'react-dom/client';
+
+  const App = () => {
+    return React.createElement('div', null, 'aaa');
+  };
+
+  window.addEventListener('load', () => {
+    const root = document.getElementById('root')
+    ReactDOM.createRoot(root).render(React.createElement(App, null))
+  }) */
+</script>
+<script>
+  window.addEventListener('error',(e)=>{
+    window.parent.postMessage({type:"ERROR",message:e.message})
+  })
+</script>
+<div id="root">
+
+</div>
+
+</body>
+</html>
