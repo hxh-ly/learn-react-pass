@@ -72,6 +72,9 @@ export function SelectedMask(props: SelectedMaskProps) {
   const el = useMemo(() => {
     return document.querySelector(`.${protalWrapperClassName}`)!;
   }, []);
+  if(!el) {
+    return null;
+  }
   const curComponent = useMemo(() => {
     return getComponentById(componentId, components);
   }, [componentId]);
